@@ -12,7 +12,11 @@ test.describe('File Upload E2E', () => {
       const files = fs.readdirSync(uploadsDir);
       for (const file of files) {
         if (file !== '.gitkeep') {
-          fs.unlinkSync(path.join(uploadsDir, file));
+          try {
+            fs.unlinkSync(path.join(uploadsDir, file));
+          } catch {
+            // File may have already been deleted
+          }
         }
       }
     }
