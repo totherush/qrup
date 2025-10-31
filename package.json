@@ -20,9 +20,15 @@
   },
   "keywords": [
     "upload",
-    "file-transfer"
+    "file-transfer",
+    "local-network",
+    "qr-code"
   ],
-  "author": "",
+  "author": "Tobias Trusch",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/totherush/qrup.git"
+  },
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",

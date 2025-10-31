@@ -1,6 +1,10 @@
 # QRUp
 
-Simple file upload page for local network use. Upload files from your mobile device to the server.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+Simple file upload page for local network use. Upload files from your mobile device to the server with QR code scanning for easy access.
+
+> ⚠️ **Security Warning**: This application is designed for LOCAL NETWORK USE ONLY. Do NOT expose this server to the public internet without proper authentication and security measures.
 
 ## Setup
 
@@ -9,12 +13,16 @@ Simple file upload page for local network use. Upload files from your mobile dev
 npm install
 ```
 
-2. Start the server:
+2. (Optional) Configure environment variables:
+   - Copy `.env.example` to `.env`
+   - Customize `PORT` (default: 3000) and `UPLOAD_FOLDER` (default: uploads)
+
+3. Start the server:
 ```bash
 npm start
 ```
 
-3. Access the upload page:
+4. Access the upload page:
    - On the same device: http://localhost:3000/upload
    - From mobile device: http://YOUR_LOCAL_IP:3000/upload
    
