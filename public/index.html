@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QRUp - File Upload</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 30px;
+      text-align: center;
+      font-size: 28px;
+    }
+    
+    .upload-area {
+      border: 3px dashed #667eea;
+      border-radius: 15px;
+      padding: 60px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #f8f9ff;
+    }
+    
+    .upload-area.drag-over {
+      background: #e8ebff;
+      border-color: #764ba2;
+      transform: scale(1.02);
+    }
+    
+    .upload-area:hover {
+      background: #f0f2ff;
+    }
+    
+    .upload-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    
+    .upload-text {
+      color: #666;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    
+    .upload-hint {
+      color: #999;
+      font-size: 14px;
+    }
+    
+    input[type="file"] {
+      display: none;
+    }
+    
+    .file-list {
+      margin-top: 30px;
+    }
+    
+    .file-item {
+      background: #f8f9ff;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .file-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .file-name {
+      color: #333;
+      font-size: 14px;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .file-size {
+      color: #999;
+      font-size: 12px;
+      margin-left: 10px;
+    }
+    
+    .file-status {
+      font-size: 12px;
+      margin-left: 10px;
+      font-weight: bold;
+    }
+    
+    .file-status.uploading {
+      color: #667eea;
+    }
+    
+    .file-status.success {
+      color: #28a745;
+    }
+    
+    .file-status.error {
+      color: #dc3545;
+    }
+    
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.3s ease;
+      border-radius: 3px;
+    }
+    
+    .upload-button {
+      width: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: transform 0.2s;
+    }
+    
+    .upload-button:hover {
+      transform: translateY(-2px);
+    }
+    
+    .upload-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .message {
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      text-align: center;
+      font-size: 14px;
+    }
+    
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+      
+      h1 {
+        font-size: 24px;
+      }
+      
+      .upload-area {
+        padding: 40px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useRef } = React;
+    
+    function App() {
+      const [files, setFiles] = useState([]);
+      const [dragOver, setDragOver] = useState(false);
+      const [uploading, setUploading] = useState(false);
+      const [message, setMessage] = useState(null);
+      const fileInputRef = useRef(null);
+      
+      const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+      };
+      
+      const handleDragOver = (e) => {
+        e.preventDefault();
+        setDragOver(true);
+      };
+      
+      const handleDragLeave = (e) => {
+        e.preventDefault();
+        setDragOver(false);
+      };
+      
+      const handleDrop = (e) => {
+        e.preventDefault();
+        setDragOver(false);
+        const droppedFiles = Array.from(e.dataTransfer.files);
+        const filesWithProgress = droppedFiles.map(file => ({
+          file,
+          progress: 0,
+          status: 'pending'
+        }));
+        setFiles(prev => [...prev, ...filesWithProgress]);
+        setMessage(null);
+      };
+      
+      const handleFileSelect = (e) => {
+        const selectedFiles = Array.from(e.target.files);
+        const filesWithProgress = selectedFiles.map(file => ({
+          file,
+          progress: 0,
+          status: 'pending'
+        }));
+        setFiles(prev => [...prev, ...filesWithProgress]);
+        setMessage(null);
+      };
+      
+      const uploadFile = (fileObj, index) => {
+        return new Promise((resolve, reject) => {
+          const formData = new FormData();
+          formData.append('files', fileObj.file);
+          
+          const xhr = new XMLHttpRequest();
+          
+          xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+              const progress = Math.round((e.loaded / e.total) * 100);
+              setFiles(prev => prev.map((f, i) => 
+                i === index ? { ...f, progress, status: 'uploading' } : f
+              ));
+            }
+          });
+          
+          xhr.addEventListener('load', () => {
+            if (xhr.status === 200) {
+              setFiles(prev => prev.map((f, i) => 
+                i === index ? { ...f, progress: 100, status: 'success' } : f
+              ));
+              resolve(JSON.parse(xhr.response));
+            } else {
+              setFiles(prev => prev.map((f, i) => 
+                i === index ? { ...f, status: 'error' } : f
+              ));
+              reject(new Error('Upload failed'));
+            }
+          });
+          
+          xhr.addEventListener('error', () => {
+            setFiles(prev => prev.map((f, i) => 
+              i === index ? { ...f, status: 'error' } : f
+            ));
+            reject(new Error('Upload failed'));
+          });
+          
+          xhr.open('POST', '/api/upload');
+          xhr.send(formData);
+        });
+      };
+      
+      const handleUpload = async () => {
+        if (files.length === 0) return;
+        
+        setUploading(true);
+        setMessage(null);
+        
+        try {
+          for (let i = 0; i < files.length; i++) {
+            if (files[i].status === 'pending') {
+              await uploadFile(files[i], i);
+            }
+          }
+          
+          setMessage({ type: 'success', text: `${files.length} file(s) uploaded successfully` });
+          
+          setTimeout(() => {
+            setFiles([]);
+            setMessage(null);
+          }, 2000);
+        } catch (error) {
+          setMessage({ type: 'error', text: 'Some files failed to upload' });
+        } finally {
+          setUploading(false);
+        }
+      };
+      
+      return (
+        <div className="container">
+          <h1>📤 QRUp</h1>
+          
+          <div
+            className={`upload-area ${dragOver ? 'drag-over' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current.click()}
+          >
+            <div className="upload-icon">📁</div>
+            <div className="upload-text">Drag & drop files here</div>
+            <div className="upload-hint">or click to select files</div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={handleFileSelect}
+            />
+          </div>
+          
+          {files.length > 0 && (
+            <>
+              <div className="file-list">
+                {files.map((fileObj, index) => (
+                  <div key={index} className="file-item">
+                    <div className="file-header">
+                      <span className="file-name">{fileObj.file.name}</span>
+                      <span className="file-size">{formatFileSize(fileObj.file.size)}</span>
+                      {fileObj.status !== 'pending' && (
+                        <span className={`file-status ${fileObj.status}`}>
+                          {fileObj.status === 'uploading' && '⏫ Uploading...'}
+                          {fileObj.status === 'success' && '✓ Done'}
+                          {fileObj.status === 'error' && '✗ Failed'}
+                        </span>
+                      )}
+                    </div>
+                    {fileObj.status !== 'pending' && (
+                      <div className="progress-bar-container">
+                        <div 
+                          className="progress-bar" 
+                          style={{ width: `${fileObj.progress}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <button
+                className="upload-button"
+                onClick={handleUpload}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading...' : `Upload ${files.length} file(s)`}
+              </button>
+            </>
+          )}
+          
+          {message && (
+            <div className={`message ${message.type}`}>
+              {message.text}
+            </div>
+          )}
+        </div>
+      );
+    }
+    
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
