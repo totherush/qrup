@@ -6,6 +6,13 @@ Simple file upload page for local network use. Upload files from your mobile dev
 
 > ⚠️ **Security Warning**: This application is designed for LOCAL NETWORK USE ONLY. Do NOT expose this server to the public internet without proper authentication and security measures.
 
+## Table of Contents
+
+- [How It Works](#how-it-works)
+- [Setup](#setup)
+- [Usage](#usage)
+- [Requirements](#requirements)
+
 ## How It Works
 
 ### 1. Start the Server
