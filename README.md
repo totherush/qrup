@@ -10,7 +10,7 @@ Simple file upload page for local network use. Upload files from your mobile dev
 
 1. Install dependencies:
 ```bash
-npm install
+bun install
 ```
 
 2. (Optional) Configure environment variables:
@@ -18,15 +18,17 @@ npm install
    - Customize `PORT` (default: 3000) and `UPLOAD_FOLDER` (default: uploads)
 
 3. Start the server:
-```bash
-npm start
-```
+   ```bash
+   bun run dev
+   ```
+   Or for production:
+   ```bash
+   bun start
+   ```
 
 4. Access the upload page:
-   - On the same device: http://localhost:3000/upload
-   - From mobile device: http://YOUR_LOCAL_IP:3000/upload
-   
-The server will display the network URL when started.
+   - On the same device: http://localhost:3000
+   - From mobile device: Scan the QR code displayed in the terminal
 
 ## Usage
 
@@ -37,5 +39,5 @@ The server will display the network URL when started.
 
 ## Requirements
 
-- Node.js installed on the server machine
+- Bun runtime installed on the server machine
 - Both devices on the same local network

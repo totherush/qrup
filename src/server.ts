@@ -13,9 +13,13 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = Number.parseInt(process.env.PORT || '3000', 10);
 
-const uploadDir = path.join(__dirname, '..', process.env.UPLOAD_FOLDER || 'uploads');
+// Determine the correct base directory (works in both dev and prod)
+const baseDir = __dirname.endsWith('dist') ? __dirname : path.join(__dirname, '..');
+const clientDir = path.join(baseDir, 'dist', 'client');
+const uploadDir = path.join(baseDir, process.env.UPLOAD_FOLDER || 'uploads');
+
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
 const storage = multer.diskStorage({
@@ -31,7 +35,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 app.use(cors());
-app.use(express.static(path.join(__dirname, 'client')));
+app.use(express.static(clientDir));
 
 app.post('/api/upload', upload.array('files'), (req, res) => {
   if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
@@ -47,7 +51,7 @@ app.post('/api/upload', upload.array('files'), (req, res) => {
 });
 
 app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'index.html'));
+  res.sendFile(path.join(clientDir, 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
