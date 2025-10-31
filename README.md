@@ -56,5 +56,6 @@ bun install
 
 ## Requirements
 
+- Node.js 22.18.0 or higher
 - Bun runtime installed on the server machine
 - Both devices on the same local network
