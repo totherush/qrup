@@ -5,5 +5,7 @@ uploads/*
 .DS_Store
 *.log
 public/
-.agentsdist/
+dist/
+.agents
 .vscode/
+.amp
