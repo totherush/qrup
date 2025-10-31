@@ -14,7 +14,7 @@ const app = express();
 const PORT = Number.parseInt(process.env.PORT || '3000', 10);
 
 // Determine the correct base directory (works in both dev and prod)
-const baseDir = __dirname.endsWith('dist') ? __dirname : path.join(__dirname, '..');
+const baseDir = __dirname.endsWith('dist') ? path.join(__dirname, '..') : path.join(__dirname, '..');
 const clientDir = path.join(baseDir, 'dist', 'client');
 const uploadDir = path.join(baseDir, process.env.UPLOAD_FOLDER || 'uploads');
 
