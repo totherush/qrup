@@ -4,6 +4,7 @@ uploads/*
 !uploads/.gitkeep
 .DS_Store
 *.log
+.env
 public/
 dist/
 .agents

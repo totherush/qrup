@@ -32,7 +32,9 @@ bun install
 
 2. (Optional) Configure environment variables:
    - Copy `.env.example` to `.env`
-   - Customize `PORT` (default: 3000) and `UPLOAD_FOLDER` (default: uploads)
+   - Available environment variables:
+     - `PORT` - Server port (default: 3000)
+     - `UPLOAD_FOLDER` - Upload directory path (default: uploads)
 
 3. Start the server:
    ```bash
