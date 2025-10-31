@@ -242,7 +242,7 @@ export default function App() {
                 onClick={handleUpload}
                 disabled={uploading}
               >
-                {uploading ? 'Uploading...' : 'Attach files'}
+                {uploading ? 'Uploading...' : 'Upload files'}
               </button>
             </div>
           </>
