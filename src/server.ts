@@ -1,10 +1,15 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import cors from 'cors';
 import fs from 'fs';
 import qrcode from 'qrcode-terminal';
 import os from 'os';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = 3000;
@@ -27,9 +32,9 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 app.use(cors());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'client')));
 
-app.post('/api/upload', upload.array('files'), (req: Request, res: Response) => {
+app.post('/api/upload', upload.array('files'), (req, res) => {
   if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
     return res.status(400).json({ error: 'No files uploaded' });
   }
@@ -42,8 +47,8 @@ app.post('/api/upload', upload.array('files'), (req: Request, res: Response) => 
   });
 });
 
-app.get('/upload', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
@@ -62,10 +67,10 @@ app.listen(PORT, '0.0.0.0', () => {
   }
   
   console.log(`Server running on:`);
-  console.log(`  Local:   http://localhost:${PORT}/upload`);
+  console.log(`  Local:   http://localhost:${PORT}`);
   
   if (addresses.length > 0) {
-    const networkUrl = `http://${addresses[0]}:${PORT}/upload`;
+    const networkUrl = `http://${addresses[0]}:${PORT}`;
     console.log(`  Network: ${networkUrl}\n`);
     console.log('Scan QR code with your mobile device:\n');
     qrcode.generate(networkUrl, { small: true });
