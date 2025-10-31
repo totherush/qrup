@@ -1,21 +1,17 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 
 interface FileWithProgress {
+  id: string;
   file: File;
   progress: number;
   status: 'pending' | 'uploading' | 'success' | 'error';
-}
-
-interface Message {
-  type: 'success' | 'error';
-  text: string;
+  timeLeft?: string;
 }
 
 export default function App() {
   const [files, setFiles] = useState<FileWithProgress[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState<Message | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatFileSize = (bytes: number): string => {
@@ -23,7 +19,7 @@ export default function App() {
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`;
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -41,26 +37,29 @@ export default function App() {
     setDragOver(false);
     const droppedFiles = Array.from(e.dataTransfer.files);
     const filesWithProgress: FileWithProgress[] = droppedFiles.map((file) => ({
+      id: `${file.name}-${Date.now()}-${Math.random()}`,
       file,
       progress: 0,
       status: 'pending',
+      timeLeft: undefined,
     }));
     setFiles((prev) => [...prev, ...filesWithProgress]);
-    setMessage(null);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
     const filesWithProgress: FileWithProgress[] = selectedFiles.map((file) => ({
+      id: `${file.name}-${Date.now()}-${Math.random()}`,
       file,
       progress: 0,
       status: 'pending',
+      timeLeft: undefined,
     }));
     setFiles((prev) => [...prev, ...filesWithProgress]);
-    setMessage(null);
+    e.target.value = '';
   };
 
-  const uploadFile = (fileObj: FileWithProgress, index: number): Promise<any> => {
+  const uploadFile = (fileObj: FileWithProgress, index: number): Promise<void> => {
     return new Promise((resolve, reject) => {
       const formData = new FormData();
       formData.append('files', fileObj.file);
@@ -71,7 +70,9 @@ export default function App() {
         if (e.lengthComputable) {
           const progress = Math.round((e.loaded / e.total) * 100);
           setFiles((prev) =>
-            prev.map((f, i) => (i === index ? { ...f, progress, status: 'uploading' as const } : f))
+            prev.map((f, i) =>
+              i === index ? { ...f, progress, status: 'uploading' as const } : f,
+            ),
           );
         }
       });
@@ -79,12 +80,14 @@ export default function App() {
       xhr.addEventListener('load', () => {
         if (xhr.status === 200) {
           setFiles((prev) =>
-            prev.map((f, i) => (i === index ? { ...f, progress: 100, status: 'success' as const } : f))
+            prev.map((f, i) =>
+              i === index ? { ...f, progress: 100, status: 'success' as const } : f,
+            ),
           );
           resolve(JSON.parse(xhr.response));
         } else {
           setFiles((prev) =>
-            prev.map((f, i) => (i === index ? { ...f, status: 'error' as const } : f))
+            prev.map((f, i) => (i === index ? { ...f, status: 'error' as const } : f)),
           );
           reject(new Error('Upload failed'));
         }
@@ -92,7 +95,7 @@ export default function App() {
 
       xhr.addEventListener('error', () => {
         setFiles((prev) =>
-          prev.map((f, i) => (i === index ? { ...f, status: 'error' as const } : f))
+          prev.map((f, i) => (i === index ? { ...f, status: 'error' as const } : f)),
         );
         reject(new Error('Upload failed'));
       });
@@ -106,7 +109,6 @@ export default function App() {
     if (files.length === 0) return;
 
     setUploading(true);
-    setMessage(null);
 
     try {
       for (let i = 0; i < files.length; i++) {
@@ -114,39 +116,50 @@ export default function App() {
           await uploadFile(files[i], i);
         }
       }
-
-      setMessage({ type: 'success', text: `${files.length} file(s) uploaded successfully` });
-
-      setTimeout(() => {
-        setFiles([]);
-        setMessage(null);
-      }, 2000);
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Some files failed to upload' });
     } finally {
       setUploading(false);
     }
   };
 
+  const removeFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCancel = () => {
+    setFiles([]);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-purple-900 flex items-center justify-center p-5">
-      <div className="bg-white rounded-3xl p-10 max-w-2xl w-full shadow-2xl">
-        <h1 className="text-4xl font-bold text-gray-800 text-center mb-8">📤 QRUp</h1>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-5">
+      <div className="bg-white rounded-xl p-8 max-w-xl w-full shadow-sm">
+        <div className="mb-6">
+          <h1 className="text-xl font-semibold text-gray-900 mb-1">Upload Files</h1>
+          <p className="text-sm text-gray-500">Uploaded project attachments</p>
+        </div>
 
         <div
-          className={`border-4 border-dashed rounded-2xl p-16 text-center cursor-pointer transition-all duration-300 ${
+          className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-200 ${
             dragOver
-              ? 'bg-purple-100 border-purple-800 scale-105'
-              : 'bg-purple-50 border-purple-600 hover:bg-purple-100'
+              ? 'bg-indigo-50 border-indigo-400'
+              : 'bg-white border-gray-300 hover:border-gray-400'
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
         >
-          <div className="text-6xl mb-5">📁</div>
-          <div className="text-gray-700 text-lg mb-2">Drag & drop files here</div>
-          <div className="text-gray-500 text-sm">or click to select files</div>
+          <div className="text-5xl mb-4">📄</div>
+          <div className="text-gray-900 font-medium mb-1">Drag and drop your files</div>
+          <button
+            type="button"
+            className="bg-indigo-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
+          >
+            Select files
+          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -158,64 +171,81 @@ export default function App() {
 
         {files.length > 0 && (
           <>
-            <div className="mt-8 space-y-3">
-              {files.map((fileObj, index) => (
-                <div key={index} className="bg-purple-50 p-4 rounded-xl">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-800 text-sm flex-1 truncate">
-                      {fileObj.file.name}
-                    </span>
-                    <span className="text-gray-500 text-xs ml-3">
-                      {formatFileSize(fileObj.file.size)}
-                    </span>
-                    {fileObj.status !== 'pending' && (
-                      <span
-                        className={`text-xs ml-3 font-bold ${
-                          fileObj.status === 'uploading'
-                            ? 'text-purple-600'
-                            : fileObj.status === 'success'
-                            ? 'text-green-600'
-                            : 'text-red-600'
-                        }`}
+            <div className="mt-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-3">Uploaded Files</h2>
+              <div className="space-y-2">
+                {files.map((fileObj, index) => (
+                  <div key={fileObj.id} className="bg-white border border-gray-200 p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {fileObj.file.name}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          {formatFileSize(fileObj.file.size)} | {fileObj.progress}%
+                          {fileObj.status === 'uploading' &&
+                            fileObj.timeLeft &&
+                            ` • ${fileObj.timeLeft} sec left`}
+                          {fileObj.status === 'success' && ' • Upload Successful'}
+                          {fileObj.status === 'error' && ' • Upload failed'}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        className="ml-3 text-gray-400 hover:text-gray-600 transition-colors"
+                        aria-label="Remove file"
                       >
-                        {fileObj.status === 'uploading' && '⏫ Uploading...'}
-                        {fileObj.status === 'success' && '✓ Done'}
-                        {fileObj.status === 'error' && '✗ Failed'}
-                      </span>
-                    )}
-                  </div>
-                  {fileObj.status !== 'pending' && (
-                    <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-purple-600 to-purple-800 transition-all duration-300 rounded-full"
+                        className={`h-full transition-all duration-300 rounded-full ${
+                          fileObj.status === 'success'
+                            ? 'bg-green-500'
+                            : fileObj.status === 'error'
+                              ? 'bg-red-500'
+                              : 'bg-indigo-600'
+                        }`}
                         style={{ width: `${fileObj.progress}%` }}
                       />
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <button
-              className="w-full bg-gradient-to-r from-purple-600 to-purple-800 text-white font-bold py-4 rounded-xl text-base mt-5 transition-transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              onClick={handleUpload}
-              disabled={uploading}
-            >
-              {uploading ? 'Uploading...' : `Upload ${files.length} file(s)`}
-            </button>
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                className="flex-1 bg-white text-gray-700 font-medium py-3 rounded-lg text-sm border border-gray-300 hover:bg-gray-50 transition-colors"
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="flex-1 bg-indigo-600 text-white font-medium py-3 rounded-lg text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleUpload}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading...' : 'Attach files'}
+              </button>
+            </div>
           </>
-        )}
-
-        {message && (
-          <div
-            className={`mt-5 p-4 rounded-xl text-center text-sm ${
-              message.type === 'success'
-                ? 'bg-green-100 text-green-800'
-                : 'bg-red-100 text-red-800'
-            }`}
-          >
-            {message.text}
-          </div>
         )}
       </div>
     </div>

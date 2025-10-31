@@ -1,8 +1,8 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
+const path = require('node:path');
 const cors = require('cors');
-const fs = require('fs');
+const fs = require('node:fs');
 const qrcode = require('qrcode-terminal');
 
 const app = express();
@@ -14,13 +14,13 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (_req, _file, cb) => {
     cb(null, uploadDir);
   },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
-  }
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${uniqueSuffix}-${file.originalname}`);
+  },
 });
 
 const upload = multer({ storage: storage });
@@ -32,23 +32,23 @@ app.post('/api/upload', upload.array('files'), (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: 'No files uploaded' });
   }
-  
-  const fileNames = req.files.map(file => file.filename);
-  res.json({ 
-    success: true, 
+
+  const fileNames = req.files.map((file) => file.filename);
+  res.json({
+    success: true,
     message: `${req.files.length} file(s) uploaded successfully`,
-    files: fileNames
+    files: fileNames,
   });
 });
 
-app.get('/upload', (req, res) => {
+app.get('/upload', (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  const networkInterfaces = require('os').networkInterfaces();
+  const networkInterfaces = require('node:os').networkInterfaces();
   const addresses = [];
-  
+
   for (const name of Object.keys(networkInterfaces)) {
     for (const net of networkInterfaces[name]) {
       if (net.family === 'IPv4' && !net.internal) {
@@ -56,10 +56,10 @@ app.listen(PORT, '0.0.0.0', () => {
       }
     }
   }
-  
+
   console.log(`Server running on:`);
   console.log(`  Local:   http://localhost:${PORT}/upload`);
-  
+
   if (addresses.length > 0) {
     const networkUrl = `http://${addresses[0]}:${PORT}/upload`;
     console.log(`  Network: ${networkUrl}\n`);
