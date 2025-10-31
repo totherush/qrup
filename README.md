@@ -6,6 +6,23 @@ Simple file upload page for local network use. Upload files from your mobile dev
 
 > ⚠️ **Security Warning**: This application is designed for LOCAL NETWORK USE ONLY. Do NOT expose this server to the public internet without proper authentication and security measures.
 
+## How It Works
+
+### 1. Start the Server
+When you run the application, a QR code is displayed in your terminal along with the local network URL:
+
+<img src=".github/screenshots/qr-terminal.png" alt="Terminal with QR code" width="600">
+
+### 2. Access from Desktop
+Open the URL in your desktop browser to upload files locally:
+
+<img src=".github/screenshots/desktop-browser.png" alt="Desktop browser upload interface" width="600">
+
+### 3. Access from Mobile
+Scan the QR code with your mobile device to instantly access the upload page:
+
+<img src=".github/screenshots/mobile-browser.png" alt="Mobile browser upload interface" width="300">
+
 ## Setup
 
 1. Install dependencies:
