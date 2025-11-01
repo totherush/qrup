@@ -10,7 +10,6 @@ Simple file upload page for local network use. Upload files from your mobile dev
 
 - [How It Works](#how-it-works)
 - [Setup](#setup)
-- [Usage](#usage)
 - [Requirements](#requirements)
 
 ## How It Works
@@ -29,6 +28,12 @@ Open the URL in your desktop browser to upload files locally:
 Scan the QR code with your mobile device to instantly access the upload page:
 
 <img src=".github/screenshots/mobile-browser.png" alt="Mobile browser upload interface" width="300">
+
+### 4. Upload Files
+- Drag and drop files onto the upload area
+- Or click to select files from your device
+- Files are saved to the `uploads` folder
+- Works seamlessly on both desktop and mobile devices
 
 ## Setup
 
@@ -55,13 +60,6 @@ bun install
 4. Access the upload page:
    - On the same device: http://localhost:3000
    - From mobile device: Scan the QR code displayed in the terminal
-
-## Usage
-
-- Drag and drop files onto the upload area
-- Or click to select files from your device
-- Files are saved to the `uploads` folder
-- Works on mobile devices via local network
 
 ## Requirements
 
