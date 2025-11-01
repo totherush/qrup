@@ -101,7 +101,12 @@ export default function App() {
           setFiles((prev) =>
             prev.map((f, i) =>
               i === index
-                ? { ...f, progress: 100, status: 'success' as const, uploadedFilename: response.files?.[0] }
+                ? {
+                    ...f,
+                    progress: 100,
+                    status: 'success' as const,
+                    uploadedFilename: response.files?.[0],
+                  }
                 : f,
             ),
           );
@@ -120,7 +125,9 @@ export default function App() {
             }
           }
           setFiles((prev) =>
-            prev.map((f, i) => (i === index ? { ...f, status: 'error' as const, errorMessage } : f)),
+            prev.map((f, i) =>
+              i === index ? { ...f, status: 'error' as const, errorMessage } : f,
+            ),
           );
           reject(new Error(errorMessage));
         }
@@ -179,7 +186,7 @@ export default function App() {
     const fileObj = files[index];
     if (fileObj.xhr) {
       fileObj.xhr.abort();
-      
+
       const filenameToDelete = fileObj.uploadedFilename || fileObj.file.name;
       try {
         await fetch(`/api/upload/${filenameToDelete}`, { method: 'DELETE' });
@@ -192,12 +199,12 @@ export default function App() {
   const deleteUploadedFile = async (index: number) => {
     const fileObj = files[index];
     const filenameToDelete = fileObj.uploadedFilename || fileObj.file.name;
-    
+
     try {
       const response = await fetch(`/api/upload/${filenameToDelete}`, {
         method: 'DELETE',
       });
-      
+
       if (response.ok) {
         setFiles((prev) => prev.filter((_, i) => i !== index));
         setRefreshTrigger((prev) => prev + 1);
@@ -279,7 +286,8 @@ export default function App() {
                                 fileObj.timeLeft &&
                                 ` • ${fileObj.timeLeft} sec left`}
                               {fileObj.status === 'success' && ' • Upload Successful'}
-                              {fileObj.status === 'error' && ` • ${fileObj.errorMessage || 'Upload failed'}`}
+                              {fileObj.status === 'error' &&
+                                ` • ${fileObj.errorMessage || 'Upload failed'}`}
                             </div>
                           </div>
                           <button
@@ -287,7 +295,10 @@ export default function App() {
                             onClick={() => {
                               if (fileObj.status === 'uploading') {
                                 stopUpload(index);
-                              } else if (fileObj.status === 'success' || fileObj.status === 'error') {
+                              } else if (
+                                fileObj.status === 'success' ||
+                                fileObj.status === 'error'
+                              ) {
                                 deleteUploadedFile(index);
                               } else {
                                 removeFile(index);
@@ -303,11 +314,7 @@ export default function App() {
                             }
                           >
                             {fileObj.status === 'uploading' ? (
-                              <svg
-                                className="w-5 h-5"
-                                fill="currentColor"
-                                viewBox="0 0 24 24"
-                              >
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                 <rect x="6" y="6" width="12" height="12" rx="1" />
                               </svg>
                             ) : fileObj.status === 'success' || fileObj.status === 'error' ? (

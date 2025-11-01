@@ -123,7 +123,7 @@ export default function FileBrowser({ refreshTrigger }: FileBrowserProps) {
 
   useEffect(() => {
     fetchFiles();
-  }, [fetchFiles, refreshTrigger]);
+  }, [fetchFiles]);
 
   const handleToggleSelect = (path: string) => {
     setSelectedFiles((prev) => {

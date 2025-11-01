@@ -38,8 +38,12 @@ const storage: StorageEngine = multer.diskStorage({
     file: Express.Multer.File,
     cb: (error: Error | null, filename: string) => void,
   ) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
+    const filePath = path.join(uploadDir, file.originalname);
+    if (fs.existsSync(filePath)) {
+      cb(new Error(`File '${file.originalname}' already exists`), '');
+    } else {
+      cb(null, file.originalname);
+    }
   },
 });
 
@@ -48,16 +52,22 @@ const upload = multer({ storage: storage });
 app.use(cors());
 app.use(express.static(clientDir));
 
-app.post('/api/upload', upload.array('files'), (req: Request, res: Response) => {
-  if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
-    return res.status(400).json({ error: 'No files uploaded' });
-  }
+app.post('/api/upload', (req: Request, res: Response) => {
+  upload.array('files')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
 
-  const fileNames = req.files.map((file) => file.filename);
-  res.json({
-    success: true,
-    message: `${req.files.length} file(s) uploaded successfully`,
-    files: fileNames,
+    if (!req.files || !Array.isArray(req.files) || req.files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    const fileNames = req.files.map((file) => file.filename);
+    res.json({
+      success: true,
+      message: `${req.files.length} file(s) uploaded successfully`,
+      files: fileNames,
+    });
   });
 });
 
@@ -108,6 +118,27 @@ app.get('/api/files', (_req: Request, res: Response) => {
   } catch (error) {
     console.error('Error reading files:', error);
     res.status(500).json({ error: 'Failed to read files' });
+  }
+});
+
+app.delete('/api/upload/:filename', (req: Request, res: Response) => {
+  try {
+    const filename = req.params.filename;
+    const filePath = path.join(uploadDir, filename);
+
+    if (!filePath.startsWith(path.resolve(uploadDir))) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      res.json({ success: true, message: 'File deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'File not found' });
+    }
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    res.status(500).json({ error: 'Failed to delete file' });
   }
 });
 

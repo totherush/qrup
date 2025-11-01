@@ -14,7 +14,7 @@
     "lint": "biome check src client",
     "lint:fix": "biome check --write --unsafe src client",
     "format": "biome format --write src client",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --reporter=line",
     "test:e2e:ui": "playwright test --ui",
     "test:ci": "playwright test"
   },
