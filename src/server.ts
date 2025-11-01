@@ -275,7 +275,7 @@ app.get('/api/download', (req: Request, res: Response) => {
   }
 });
 
-app.get('(.*)', (_req: Request, res: Response) => {
+app.get('/*splat', (_req: Request, res: Response) => {
   res.sendFile(path.join(clientDir, 'index.html'));
 });
 
