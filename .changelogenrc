@@ -1,0 +1,7 @@
+{
+  "changelog": {
+    "output": "CHANGELOG.md",
+    "repo": "totherush/qrup",
+    "hideAuthorEmail": true
+  }
+}
