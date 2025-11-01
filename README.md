@@ -9,6 +9,10 @@ Simple file upload page for local network use. Upload files from your mobile dev
 ## Table of Contents
 
 - [How It Works](#how-it-works)
+  - [1. Start the Server](#1-start-the-server)
+  - [2. Access from Desktop](#2-access-from-desktop)
+  - [3. Access from Mobile](#3-access-from-mobile)
+  - [4. Upload Files](#4-upload-files)
 - [Setup](#setup)
 - [Requirements](#requirements)
 
