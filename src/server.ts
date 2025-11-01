@@ -49,6 +49,55 @@ const storage: StorageEngine = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+const USE_COLOR = process.stdout.isTTY && !process.env.NO_COLOR;
+const C = {
+  reset: USE_COLOR ? '\x1b[0m' : '',
+  dim: USE_COLOR ? '\x1b[2m' : '',
+  red: USE_COLOR ? '\x1b[31m' : '',
+  green: USE_COLOR ? '\x1b[32m' : '',
+  cyan: USE_COLOR ? '\x1b[36m' : '',
+};
+
+function formatTimestamp(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${y}-${m}-${day} ${hh}:${mm}:${ss}`;
+}
+
+function padCell(s: string, width: number) {
+  if (s.length > width) return s.slice(0, width);
+  return s.padEnd(width, ' ');
+}
+
+function colorAction(action: string, padded: string) {
+  switch (action) {
+    case 'UPLOAD':
+      return `${C.green}${padded}${C.reset}`;
+    case 'DOWNLOAD':
+      return `${C.cyan}${padded}${C.reset}`;
+    case 'DELETE':
+      return `${C.red}${padded}${C.reset}`;
+    default:
+      return padded;
+  }
+}
+
+function logAction(ip: string, action: string, filename: string) {
+  const ts = `${C.dim}${formatTimestamp()}${C.reset}`;
+  const level = padCell('INFO', 5);
+  const ipClean = (ip || 'unknown').replace('::ffff:', '');
+  const ipCell = padCell(ipClean, 21);
+  const actionCellPlain = padCell(action, 9);
+  const actionCell = colorAction(action, actionCellPlain);
+  const fileCell = `"${filename}"`;
+
+  console.info(`${ts} ${level} ${ipCell} ${actionCell} ${fileCell}`);
+}
+
 app.use(cors());
 app.use(express.static(clientDir));
 
@@ -62,7 +111,13 @@ app.post('/api/upload', (req: Request, res: Response) => {
       return res.status(400).json({ error: 'No files uploaded' });
     }
 
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
     const fileNames = req.files.map((file) => file.filename);
+    
+    for (const file of req.files) {
+      logAction(clientIp, 'UPLOAD', file.filename);
+    }
+
     res.json({
       success: true,
       message: `${req.files.length} file(s) uploaded successfully`,
@@ -132,6 +187,8 @@ app.delete('/api/upload/:filename', (req: Request, res: Response) => {
 
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
+      const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+      logAction(clientIp, 'DELETE', filename);
       res.json({ success: true, message: 'File deleted successfully' });
     } else {
       res.status(404).json({ error: 'File not found' });
@@ -158,6 +215,8 @@ app.get('/api/download', (req: Request, res: Response) => {
 
     console.log('Download request for files:', filePaths);
 
+    const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+
     if (filePaths.length === 1) {
       const relativePath = filePaths[0] as string;
       const filePath = path.resolve(uploadDir, relativePath);
@@ -176,6 +235,7 @@ app.get('/api/download', (req: Request, res: Response) => {
 
       const fileName = path.basename(filePath);
       console.log('Downloading file:', fileName);
+      logAction(clientIp, 'DOWNLOAD', fileName);
       return res.download(filePath, fileName);
     } else {
       console.log('Creating ZIP archive for multiple files');
@@ -209,6 +269,7 @@ app.get('/api/download', (req: Request, res: Response) => {
       }
 
       console.log(`Finalizing archive with ${fileCount} files`);
+      logAction(clientIp, 'DOWNLOAD', `files.zip (${fileCount} files)`);
       archive.finalize();
     }
   } catch (error) {
@@ -246,6 +307,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`  Network: ${networkUrl}\n`);
     console.log('Scan QR code with your mobile device:\n');
     qrcode.generate(networkUrl, { small: true });
+    console.log('\nActivity log:');
   } else {
     console.log('  Network: No network interface found');
   }
