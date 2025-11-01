@@ -303,9 +303,9 @@ app.listen(PORT, '0.0.0.0', () => {
   } else {
     console.log('  Network: No network interface found');
   }
-  
+
   console.log(`\nUpload folder: ${uploadDir}\n`);
-  
+
   if (addresses.length > 0) {
     const networkUrl = `http://${addresses[0]}:${PORT}`;
     console.log('Scan QR code with your mobile device:\n');
