@@ -113,7 +113,7 @@ app.post('/api/upload', (req: Request, res: Response) => {
 
     const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
     const fileNames = req.files.map((file) => file.filename);
-    
+
     for (const file of req.files) {
       logAction(clientIp, 'UPLOAD', file.filename);
     }

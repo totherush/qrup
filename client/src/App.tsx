@@ -97,7 +97,7 @@ export default function App() {
       xhr.addEventListener('load', () => {
         const isOK = xhr.status >= 200 && xhr.status < 300;
         if (isOK) {
-          const response = (xhr.response ?? {}) as any;
+          const response = (xhr.response ?? {}) as { files?: string[] };
           setFiles((prev) =>
             prev.map((f, i) =>
               i === index
@@ -113,12 +113,12 @@ export default function App() {
           resolve();
         } else {
           let errorMessage = 'Upload failed';
-          const resp = xhr.response as any;
+          const resp = xhr.response as { error?: string } | null;
           if (resp && typeof resp === 'object' && 'error' in resp) {
             errorMessage = String(resp.error);
           } else if (xhr.responseText) {
             try {
-              const parsed = JSON.parse(xhr.responseText);
+              const parsed = JSON.parse(xhr.responseText) as { error?: string };
               errorMessage = parsed.error || errorMessage;
             } catch {
               // ignore
