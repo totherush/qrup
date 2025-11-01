@@ -29,7 +29,7 @@ function FileTreeNode({
   node: FileNode;
   level?: number;
   selectedFiles: Set<string>;
-  onToggleSelect: (path: string) => void;
+  onToggleSelect: (path: string, node: FileNode) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(true);
   const hasChildren = node.children && node.children.length > 0;
@@ -37,7 +37,7 @@ function FileTreeNode({
 
   const handleCheckboxClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onToggleSelect(node.path);
+    onToggleSelect(node.path, node);
   };
 
   return (
@@ -85,12 +85,21 @@ function FileTreeNode({
 function collectAllFilePaths(nodes: FileNode[]): string[] {
   const paths: string[] = [];
   for (const node of nodes) {
-    if (node.type === 'file') {
-      paths.push(node.path);
-    }
+    paths.push(node.path);
     if (node.children) {
       paths.push(...collectAllFilePaths(node.children));
     }
+  }
+  return paths;
+}
+
+function collectNodeAndChildren(node: FileNode): string[] {
+  const paths: string[] = [];
+  if (node.type === 'file') {
+    paths.push(node.path);
+  }
+  if (node.children) {
+    paths.push(...collectAllFilePaths(node.children));
   }
   return paths;
 }
@@ -124,13 +133,29 @@ export default function FileBrowser({ refreshTrigger }: FileBrowserProps) {
     fetchFiles();
   }, [fetchFiles, refreshTrigger]);
 
-  const handleToggleSelect = (path: string) => {
+  const handleToggleSelect = (path: string, node: FileNode) => {
     setSelectedFiles((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(path)) {
+      const isCurrentlySelected = newSet.has(path);
+      
+      if (isCurrentlySelected) {
+        // Deselect this node and all its children
         newSet.delete(path);
+        if (node.children) {
+          const childPaths = collectNodeAndChildren(node);
+          for (const childPath of childPaths) {
+            newSet.delete(childPath);
+          }
+        }
       } else {
+        // Select this node and all its children
         newSet.add(path);
+        if (node.children) {
+          const childPaths = collectNodeAndChildren(node);
+          for (const childPath of childPaths) {
+            newSet.add(childPath);
+          }
+        }
       }
       return newSet;
     });
