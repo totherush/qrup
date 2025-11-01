@@ -213,15 +213,11 @@ app.get('/api/download', (req: Request, res: Response) => {
       return res.status(400).json({ error: 'No files specified' });
     }
 
-    console.log('Download request for files:', filePaths);
-
     const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
 
     if (filePaths.length === 1) {
       const relativePath = filePaths[0] as string;
       const filePath = path.resolve(uploadDir, relativePath);
-
-      console.log('Single file download:', { relativePath, filePath, uploadDir });
 
       if (!filePath.startsWith(path.resolve(uploadDir))) {
         console.error('Path traversal attempt:', filePath);
@@ -234,7 +230,6 @@ app.get('/api/download', (req: Request, res: Response) => {
       }
 
       const fileName = path.basename(filePath);
-      console.log('Downloading file:', fileName);
       logAction(clientIp, 'DOWNLOAD', fileName);
       return res.download(filePath, fileName);
     } else {

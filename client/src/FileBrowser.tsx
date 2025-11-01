@@ -171,9 +171,9 @@ export default function FileBrowser({ refreshTrigger }: FileBrowserProps) {
       const contentDisposition = response.headers.get('content-disposition');
       let filename = 'download';
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
         }
       } else {
         filename =
