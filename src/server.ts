@@ -147,28 +147,40 @@ interface FileNode {
 }
 
 function buildFileTree(dirPath: string, basePath = ''): FileNode[] {
-  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+  let entries: fs.Dirent[];
+  try {
+    entries = fs.readdirSync(dirPath, { withFileTypes: true });
+  } catch {
+    console.warn(`Skipping directory due to permission error: ${dirPath}`);
+    return [];
+  }
+
   const nodes: FileNode[] = [];
 
   for (const entry of entries) {
     const fullPath = path.join(dirPath, entry.name);
     const relativePath = path.join(basePath, entry.name);
 
-    if (entry.isDirectory()) {
-      nodes.push({
-        name: entry.name,
-        type: 'directory',
-        path: relativePath,
-        children: buildFileTree(fullPath, relativePath),
-      });
-    } else {
-      const stats = fs.statSync(fullPath);
-      nodes.push({
-        name: entry.name,
-        type: 'file',
-        path: relativePath,
-        size: stats.size,
-      });
+    try {
+      if (entry.isDirectory()) {
+        const children = buildFileTree(fullPath, relativePath);
+        nodes.push({
+          name: entry.name,
+          type: 'directory',
+          path: relativePath,
+          children,
+        });
+      } else {
+        const stats = fs.statSync(fullPath);
+        nodes.push({
+          name: entry.name,
+          type: 'file',
+          path: relativePath,
+          size: stats.size,
+        });
+      }
+    } catch {
+      console.warn(`Skipping ${fullPath} due to permission error`);
     }
   }
 
