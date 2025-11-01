@@ -75,12 +75,10 @@ qrup -p 8080 -u ./my-uploads
 
 To update to the latest version:
 ```bash
-brew untap totherush/tap
+brew uninstall --force qrup
+brew untap --force totherush/tap
 brew tap totherush/tap
-brew update-reset
-brew cleanup -s
-brew fetch qrup --force
-brew reinstall qrup
+brew install qrup
 ```
 
 ### Manual Setup
