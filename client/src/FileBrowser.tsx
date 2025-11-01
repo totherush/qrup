@@ -200,7 +200,7 @@ export default function FileBrowser({ refreshTrigger }: FileBrowserProps) {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-1">File Browser</h2>
-            <p className="text-sm text-gray-500">Uploaded files and folders</p>
+            <p className="text-sm text-gray-500">Uploaded files</p>
           </div>
           <button
             type="button"
