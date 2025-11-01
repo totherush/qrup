@@ -1,6 +1,47 @@
 # Changelog
 
 
+## v0.1.2
+
+
+### 🚀 Enhancements
+
+- **ui:** Migrate to React and Tailwind CSS ([cb7a472](https://github.com/totherush/qrup/commit/cb7a472))
+- **explorer:** Add file selection and download ([f1eb2e8](https://github.com/totherush/qrup/commit/f1eb2e8))
+
+### 🩹 Fixes
+
+- **api:** Resolve base directory path in production ([c78cabd](https://github.com/totherush/qrup/commit/c78cabd))
+- **upload:** Resolve cancelled upload cleanup and test race conditions ([fb6259d](https://github.com/totherush/qrup/commit/fb6259d))
+- **ui:** Improve upload UI and file browser interactions ([2c2e067](https://github.com/totherush/qrup/commit/2c2e067))
+
+### 📖 Documentation
+
+- **config:** Add AGENTS.md for command discovery ([3558f3d](https://github.com/totherush/qrup/commit/3558f3d))
+- Prepare repository for public release ([1085ae5](https://github.com/totherush/qrup/commit/1085ae5))
+- Add screenshots to demonstrate app workflow ([14d0800](https://github.com/totherush/qrup/commit/14d0800))
+- **readme:** Reorganize usage instructions ([3b19687](https://github.com/totherush/qrup/commit/3b19687))
+
+### 🏡 Chore
+
+- **config:** Add Biome linter and agent instructions ([61c352c](https://github.com/totherush/qrup/commit/61c352c))
+- **config:** Migrate to Bun runtime and improve dev workflow ([0d71786](https://github.com/totherush/qrup/commit/0d71786))
+- Remove .agents folder from repository ([f72ec69](https://github.com/totherush/qrup/commit/f72ec69))
+- **release:** V0.1.1 ([b327d8d](https://github.com/totherush/qrup/commit/b327d8d))
+
+### ✅ Tests
+
+- **e2e:** Add Playwright E2E tests with CI workflow ([1228d77](https://github.com/totherush/qrup/commit/1228d77))
+
+### 🤖 CI
+
+- **workflow:** Add biome linter to GitHub Actions ([1150654](https://github.com/totherush/qrup/commit/1150654))
+- Migrate CI workflow to Bun runtime ([4bf6d6b](https://github.com/totherush/qrup/commit/4bf6d6b))
+
+### ❤️ Contributors
+
+- Tobi <tobiastrusch@gmail.com>
+
 ## v0.1.1
 
 
