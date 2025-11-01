@@ -11,15 +11,23 @@ import qrcode from 'qrcode-terminal';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Parse CLI arguments
+const args = process.argv.slice(2);
+const getArgValue = (flag: string): string | undefined => {
+  const index = args.indexOf(flag);
+  return index !== -1 && args[index + 1] ? args[index + 1] : undefined;
+};
+
 const app = express();
-const PORT = Number.parseInt(process.env.PORT || '3000', 10);
+const PORT = Number.parseInt(getArgValue('--port') || getArgValue('-p') || process.env.PORT || '3000', 10);
 
 // Determine the correct base directory (works in both dev and prod)
 const baseDir = __dirname.endsWith('dist')
   ? path.join(__dirname, '..')
   : path.join(__dirname, '..');
 const clientDir = path.join(baseDir, 'dist', 'client');
-const uploadDir = path.join(baseDir, process.env.UPLOAD_FOLDER || 'uploads');
+const uploadFolder = getArgValue('--upload') || getArgValue('-u') || process.env.UPLOAD_FOLDER || 'uploads';
+const uploadDir = path.isAbsolute(uploadFolder) ? uploadFolder : path.join(baseDir, uploadFolder);
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
