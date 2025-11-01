@@ -124,7 +124,5 @@ test.describe('File Upload E2E', () => {
     await expect(fileBrowserSection.getByText(/test-file-3mb\.bin/).first()).toBeVisible({
       timeout: 10000,
     });
-
-    await expect(fileBrowserSection.getByText('📄').first()).toBeVisible();
   });
 });

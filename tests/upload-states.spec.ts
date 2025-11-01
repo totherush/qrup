@@ -116,7 +116,8 @@ test.describe('Upload States and Icons', () => {
 
     await stopButton.click();
 
-    await expect(page.getByText('Upload cancelled')).toBeVisible({ timeout: 2000 });
+    // File should be removed from UI immediately after stopping
+    await expect(page.getByText('test-file-3mb.bin')).not.toBeVisible({ timeout: 2000 });
   });
 
   test('should show bin icon after successful upload', async ({ page }) => {

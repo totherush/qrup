@@ -185,14 +185,22 @@ export default function App() {
   const stopUpload = async (index: number) => {
     const fileObj = files[index];
     if (fileObj.xhr) {
+      const filenameToDelete = fileObj.uploadedFilename || fileObj.file.name;
+
+      // Remove from UI first
+      setFiles((prev) => prev.filter((_, i) => i !== index));
+
+      // Then abort and cleanup
       fileObj.xhr.abort();
 
-      const filenameToDelete = fileObj.uploadedFilename || fileObj.file.name;
       try {
-        await fetch(`/api/upload/${filenameToDelete}`, { method: 'DELETE' });
+        await fetch(`/api/upload/${encodeURIComponent(filenameToDelete)}`, { method: 'DELETE' });
       } catch (error) {
         console.error('Failed to delete partial file:', error);
       }
+
+      // Refresh file browser
+      setRefreshTrigger((prev) => prev + 1);
     }
   };
 
@@ -200,14 +208,21 @@ export default function App() {
     const fileObj = files[index];
     const filenameToDelete = fileObj.uploadedFilename || fileObj.file.name;
 
+    console.log('Deleting file:', { index, filenameToDelete, status: fileObj.status });
+
     try {
-      const response = await fetch(`/api/upload/${filenameToDelete}`, {
+      const response = await fetch(`/api/upload/${encodeURIComponent(filenameToDelete)}`, {
         method: 'DELETE',
       });
+
+      console.log('Delete response:', response.status, response.ok);
 
       if (response.ok) {
         setFiles((prev) => prev.filter((_, i) => i !== index));
         setRefreshTrigger((prev) => prev + 1);
+      } else {
+        console.error('Delete failed with status:', response.status);
+        setFiles((prev) => prev.filter((_, i) => i !== index));
       }
     } catch (error) {
       console.error('Failed to delete file:', error);
@@ -230,7 +245,7 @@ export default function App() {
           <div className="bg-white rounded-xl p-8 shadow-sm">
             <div className="mb-6">
               <h1 className="text-xl font-semibold text-gray-900 mb-1">Upload Files</h1>
-              <p className="text-sm text-gray-500">Uploaded project attachments</p>
+              <p className="text-sm text-gray-500">To your server's upload folder</p>
             </div>
 
             <div
@@ -377,7 +392,7 @@ export default function App() {
                     type="button"
                     className="flex-1 bg-indigo-600 text-white font-medium py-3 rounded-lg text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleUpload}
-                    disabled={uploading}
+                    disabled={uploading || !files.some((f) => f.status === 'pending')}
                   >
                     {uploading ? 'Uploading...' : 'Upload files'}
                   </button>

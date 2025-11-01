@@ -56,10 +56,8 @@ function FileTreeNode({
           className="flex items-center gap-2 flex-1 cursor-pointer"
           onClick={() => node.type === 'directory' && setIsExpanded(!isExpanded)}
         >
-          {node.type === 'directory' ? (
+          {node.type === 'directory' && (
             <span className="text-gray-600 text-sm">{isExpanded ? '📂' : '📁'}</span>
-          ) : (
-            <span className="text-gray-600 text-sm">📄</span>
           )}
           <span className="text-sm text-gray-900 flex-1 truncate">{node.name}</span>
           {node.type === 'file' && node.size !== undefined && (
@@ -121,9 +119,10 @@ export default function FileBrowser({ refreshTrigger }: FileBrowserProps) {
     }
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshTrigger intentionally triggers refetch
   useEffect(() => {
     fetchFiles();
-  }, [fetchFiles]);
+  }, [fetchFiles, refreshTrigger]);
 
   const handleToggleSelect = (path: string) => {
     setSelectedFiles((prev) => {
@@ -137,13 +136,13 @@ export default function FileBrowser({ refreshTrigger }: FileBrowserProps) {
     });
   };
 
-  const handleSelectAll = () => {
-    const allFilePaths = collectAllFilePaths(files);
-    setSelectedFiles(new Set(allFilePaths));
-  };
-
-  const handleDeselectAll = () => {
-    setSelectedFiles(new Set());
+  const handleToggleSelectAll = () => {
+    if (selectedFiles.size > 0) {
+      setSelectedFiles(new Set());
+    } else {
+      const allFilePaths = collectAllFilePaths(files);
+      setSelectedFiles(new Set(allFilePaths));
+    }
   };
 
   const handleDownload = async () => {
@@ -224,18 +223,10 @@ export default function FileBrowser({ refreshTrigger }: FileBrowserProps) {
           <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
-              onClick={handleSelectAll}
+              onClick={handleToggleSelectAll}
               className="px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
             >
-              Select All
-            </button>
-            <button
-              type="button"
-              onClick={handleDeselectAll}
-              className="px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-              disabled={selectedFiles.size === 0}
-            >
-              Deselect All
+              {selectedFiles.size > 0 ? 'Deselect All' : 'Select All'}
             </button>
             <button
               type="button"
@@ -260,7 +251,7 @@ export default function FileBrowser({ refreshTrigger }: FileBrowserProps) {
       ) : error ? (
         <div className="text-center py-8 text-red-500">{error}</div>
       ) : files.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">No files uploaded yet</div>
+        <div className="text-center py-8 text-gray-500">Upload folder is empty</div>
       ) : (
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           <div className="max-h-[500px] overflow-y-auto p-2">
