@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v0.1.5
+
+[compare changes](https://github.com/totherush/qrup/compare/v0.1.4...v0.1.5)
+
+### 🚀 Enhancements
+
+- **cli:** Add port and upload folder CLI arguments ([7d235cd](https://github.com/totherush/qrup/commit/7d235cd))
+
+### 📖 Documentation
+
+- **readme:** Add homebrew installation instructions ([01f4f16](https://github.com/totherush/qrup/commit/01f4f16))
+
+### ❤️ Contributors
+
+- Tobi <tobiastrusch@gmail.com>
+
 ## v0.1.4
 
 [compare changes](https://github.com/totherush/qrup/compare/v0.1.3...v0.1.4)
