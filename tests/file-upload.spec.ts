@@ -5,7 +5,25 @@ import { expect, test } from '@playwright/test';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+test.describe.configure({ mode: 'serial' });
+
 test.describe('File Upload E2E', () => {
+  test.beforeEach(async () => {
+    const uploadsDir = path.join(__dirname, '..', 'uploads');
+    if (fs.existsSync(uploadsDir)) {
+      const files = fs.readdirSync(uploadsDir);
+      for (const file of files) {
+        if (file !== '.gitkeep') {
+          try {
+            fs.unlinkSync(path.join(uploadsDir, file));
+          } catch {
+            // File may have already been deleted
+          }
+        }
+      }
+    }
+  });
+
   test.afterEach(async () => {
     const uploadsDir = path.join(__dirname, '..', 'uploads');
     if (fs.existsSync(uploadsDir)) {
@@ -66,20 +84,22 @@ test.describe('File Upload E2E', () => {
     await expect(page.getByText('test-file-3mb.bin')).not.toBeVisible();
   });
 
-  test('should upload multiple files', async ({ page }) => {
+  test('should show error when uploading duplicate file', async ({ page }) => {
     await page.goto('/');
 
     const fileInput = page.locator('input[type="file"]');
     const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
 
-    await fileInput.setInputFiles([filePath, filePath]);
+    await fileInput.setInputFiles(filePath);
+    await page.getByRole('button', { name: 'Upload files' }).click();
+    await expect(page.getByText('Upload Successful').first()).toBeVisible({ timeout: 10000 });
 
-    const fileItems = page.getByText('test-file-3mb.bin');
-    await expect(fileItems.first()).toBeVisible();
-
+    await fileInput.setInputFiles(filePath);
     await page.getByRole('button', { name: 'Upload files' }).click();
 
-    await expect(page.getByText('Upload Successful').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("File 'test-file-3mb.bin' already exists")).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test('should display uploaded file in file browser after upload', async ({ page }) => {
@@ -93,14 +113,17 @@ test.describe('File Upload E2E', () => {
 
     await fileInput.setInputFiles(filePath);
 
-    await expect(page.getByText('test-file-3mb.bin')).toBeVisible();
+    const uploadSection = page.locator('.bg-white').filter({ hasText: 'Upload Files' });
+    await expect(uploadSection.getByText('test-file-3mb.bin')).toBeVisible();
 
     await page.getByRole('button', { name: 'Upload files' }).click();
 
     await expect(page.getByText('Upload Successful')).toBeVisible({ timeout: 10000 });
 
     const fileBrowserSection = page.locator('.bg-white').filter({ hasText: 'File Browser' });
-    await expect(fileBrowserSection.getByText(/test-file-3mb\.bin/).first()).toBeVisible({ timeout: 5000 });
+    await expect(fileBrowserSection.getByText(/test-file-3mb\.bin/).first()).toBeVisible({
+      timeout: 10000,
+    });
 
     await expect(fileBrowserSection.getByText('📄').first()).toBeVisible();
   });

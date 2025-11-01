@@ -1,12 +1,17 @@
 import { useRef, useState } from 'react';
 import FileBrowser from './FileBrowser';
 
+type UploadStatus = 'pending' | 'uploading' | 'success' | 'error';
+
 interface FileWithProgress {
   id: string;
   file: File;
   progress: number;
-  status: 'pending' | 'uploading' | 'success' | 'error';
+  status: UploadStatus;
   timeLeft?: string;
+  xhr?: XMLHttpRequest;
+  uploadedFilename?: string;
+  errorMessage?: string;
 }
 
 export default function App() {
@@ -50,13 +55,17 @@ export default function App() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
-    const filesWithProgress: FileWithProgress[] = selectedFiles.map((file) => ({
-      id: `${file.name}-${Date.now()}-${Math.random()}`,
-      file,
-      progress: 0,
-      status: 'pending',
-      timeLeft: undefined,
-    }));
+    const filesWithProgress: FileWithProgress[] = selectedFiles.map((file) => {
+      const uploadId = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+      return {
+        id: `${file.name}-${uploadId}`,
+        file,
+        progress: 0,
+        status: 'pending',
+        timeLeft: undefined,
+        uploadId,
+      };
+    });
     setFiles((prev) => [...prev, ...filesWithProgress]);
     e.target.value = '';
   };
@@ -67,6 +76,12 @@ export default function App() {
       formData.append('files', fileObj.file);
 
       const xhr = new XMLHttpRequest();
+      xhr.responseType = 'json';
+      xhr.timeout = 20000;
+
+      setFiles((prev) =>
+        prev.map((f, i) => (i === index ? { ...f, xhr, status: 'uploading' as const } : f)),
+      );
 
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
@@ -80,26 +95,62 @@ export default function App() {
       });
 
       xhr.addEventListener('load', () => {
-        if (xhr.status === 200) {
+        const isOK = xhr.status >= 200 && xhr.status < 300;
+        if (isOK) {
+          const response = (xhr.response ?? {}) as any;
           setFiles((prev) =>
             prev.map((f, i) =>
-              i === index ? { ...f, progress: 100, status: 'success' as const } : f,
+              i === index
+                ? { ...f, progress: 100, status: 'success' as const, uploadedFilename: response.files?.[0] }
+                : f,
             ),
           );
-          resolve(JSON.parse(xhr.response));
+          resolve();
         } else {
+          let errorMessage = 'Upload failed';
+          const resp = xhr.response as any;
+          if (resp && typeof resp === 'object' && 'error' in resp) {
+            errorMessage = String(resp.error);
+          } else if (xhr.responseText) {
+            try {
+              const parsed = JSON.parse(xhr.responseText);
+              errorMessage = parsed.error || errorMessage;
+            } catch {
+              // ignore
+            }
+          }
           setFiles((prev) =>
-            prev.map((f, i) => (i === index ? { ...f, status: 'error' as const } : f)),
+            prev.map((f, i) => (i === index ? { ...f, status: 'error' as const, errorMessage } : f)),
           );
-          reject(new Error('Upload failed'));
+          reject(new Error(errorMessage));
         }
+      });
+
+      xhr.addEventListener('timeout', () => {
+        setFiles((prev) =>
+          prev.map((f, i) =>
+            i === index ? { ...f, status: 'error' as const, errorMessage: 'Upload timed out' } : f,
+          ),
+        );
+        reject(new Error('Upload timed out'));
       });
 
       xhr.addEventListener('error', () => {
         setFiles((prev) =>
-          prev.map((f, i) => (i === index ? { ...f, status: 'error' as const } : f)),
+          prev.map((f, i) =>
+            i === index ? { ...f, status: 'error' as const, errorMessage: 'Upload failed' } : f,
+          ),
         );
         reject(new Error('Upload failed'));
+      });
+
+      xhr.addEventListener('abort', () => {
+        setFiles((prev) =>
+          prev.map((f, i) =>
+            i === index ? { ...f, status: 'error' as const, errorMessage: 'Upload cancelled' } : f,
+          ),
+        );
+        reject(new Error('Upload cancelled'));
       });
 
       xhr.open('POST', '/api/upload');
@@ -121,6 +172,39 @@ export default function App() {
       setRefreshTrigger((prev) => prev + 1);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const stopUpload = async (index: number) => {
+    const fileObj = files[index];
+    if (fileObj.xhr) {
+      fileObj.xhr.abort();
+      
+      const filenameToDelete = fileObj.uploadedFilename || fileObj.file.name;
+      try {
+        await fetch(`/api/upload/${filenameToDelete}`, { method: 'DELETE' });
+      } catch (error) {
+        console.error('Failed to delete partial file:', error);
+      }
+    }
+  };
+
+  const deleteUploadedFile = async (index: number) => {
+    const fileObj = files[index];
+    const filenameToDelete = fileObj.uploadedFilename || fileObj.file.name;
+    
+    try {
+      const response = await fetch(`/api/upload/${filenameToDelete}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        setFiles((prev) => prev.filter((_, i) => i !== index));
+        setRefreshTrigger((prev) => prev + 1);
+      }
+    } catch (error) {
+      console.error('Failed to delete file:', error);
+      setFiles((prev) => prev.filter((_, i) => i !== index));
     }
   };
 
@@ -195,28 +279,66 @@ export default function App() {
                                 fileObj.timeLeft &&
                                 ` • ${fileObj.timeLeft} sec left`}
                               {fileObj.status === 'success' && ' • Upload Successful'}
-                              {fileObj.status === 'error' && ' • Upload failed'}
+                              {fileObj.status === 'error' && ` • ${fileObj.errorMessage || 'Upload failed'}`}
                             </div>
                           </div>
                           <button
                             type="button"
-                            onClick={() => removeFile(index)}
+                            onClick={() => {
+                              if (fileObj.status === 'uploading') {
+                                stopUpload(index);
+                              } else if (fileObj.status === 'success' || fileObj.status === 'error') {
+                                deleteUploadedFile(index);
+                              } else {
+                                removeFile(index);
+                              }
+                            }}
                             className="ml-3 text-gray-400 hover:text-gray-600 transition-colors"
-                            aria-label="Remove file"
+                            aria-label={
+                              fileObj.status === 'uploading'
+                                ? 'Stop upload'
+                                : fileObj.status === 'success' || fileObj.status === 'error'
+                                  ? 'Delete file'
+                                  : 'Remove file'
+                            }
                           >
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
+                            {fileObj.status === 'uploading' ? (
+                              <svg
+                                className="w-5 h-5"
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <rect x="6" y="6" width="12" height="12" rx="1" />
+                              </svg>
+                            ) : fileObj.status === 'success' || fileObj.status === 'error' ? (
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            )}
                           </button>
                         </div>
                         <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
