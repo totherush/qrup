@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-Simple file upload page for local network use. Upload files from your mobile device to the server with QR code scanning for easy access.
+Simple file uploader for local network use. Upload files from your mobile device to the server with QR code scanning for easy access.
 
 > ⚠️ **Security Warning**: This application is designed for LOCAL NETWORK USE ONLY. Do NOT expose this server to the public internet without proper authentication and security measures.
 
