@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.1.4
+
+[compare changes](https://github.com/totherush/qrup/compare/v0.1.3...v0.1.4)
+
+### 🚀 Enhancements
+
+- **server:** Display upload folder path on startup ([152aab5](https://github.com/totherush/qrup/commit/152aab5))
+
+### ❤️ Contributors
+
+- Tobi <tobiastrusch@gmail.com>
+
 ## v0.1.3
 
 [compare changes](https://github.com/totherush/qrup/compare/v0.1.2...v0.1.3)
