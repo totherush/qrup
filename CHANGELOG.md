@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.1.8
+
+[compare changes](https://github.com/totherush/qrup/compare/v0.1.7...v0.1.8)
+
+### 🩹 Fixes
+
+- **ui:** Handle permission errors and improve folder selection ([79247f6](https://github.com/totherush/qrup/commit/79247f6))
+
+### ❤️ Contributors
+
+- Tobi <tobiastrusch@gmail.com>
+
 ## v0.1.7
 
 [compare changes](https://github.com/totherush/qrup/compare/v0.1.6...v0.1.7)
