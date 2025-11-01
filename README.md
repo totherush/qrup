@@ -57,6 +57,22 @@ brew tap totherush/tap
 brew install qrup
 ```
 
+**Usage:**
+```bash
+# Start with default settings (port 3000, uploads folder)
+qrup
+
+# Specify custom port and upload directory
+qrup --port 8080 --upload /path/to/uploads
+
+# Using short flags
+qrup -p 8080 -u ./my-uploads
+```
+
+**CLI Options:**
+- `--port, -p` - Server port (default: 3000)
+- `--upload, -u` - Upload directory path, can be absolute or relative (default: uploads)
+
 To update to the latest version:
 ```bash
 brew untap totherush/tap
