@@ -77,7 +77,7 @@ export default function App() {
 
       const xhr = new XMLHttpRequest();
       xhr.responseType = 'json';
-      xhr.timeout = 20000;
+      xhr.timeout = 300000; // 300 seconds
 
       setFiles((prev) =>
         prev.map((f, i) => (i === index ? { ...f, xhr, status: 'uploading' as const } : f)),
