@@ -8,13 +8,18 @@ Simple file uploader for local network use. Upload files from your mobile device
 
 ## Table of Contents
 
-- [How It Works](#how-it-works)
-  - [1. Start the Server](#1-start-the-server)
-  - [2. Access from Desktop](#2-access-from-desktop)
-  - [3. Access from Mobile](#3-access-from-mobile)
-  - [4. Upload Files](#4-upload-files)
-- [Setup](#setup)
-- [Requirements](#requirements)
+- [QRUp](#qrup)
+  - [Table of Contents](#table-of-contents)
+  - [How It Works](#how-it-works)
+    - [1. Start the Server](#1-start-the-server)
+    - [2. Access from Desktop](#2-access-from-desktop)
+    - [3. Access from Mobile](#3-access-from-mobile)
+    - [4. Upload Files](#4-upload-files)
+  - [Setup](#setup)
+    - [Installation via Homebrew](#installation-via-homebrew)
+    - [Manual Setup](#manual-setup)
+  - [Requirements](#requirements)
+  - [Release Process](#release-process)
 
 ## How It Works
 
@@ -40,6 +45,29 @@ Scan the QR code with your mobile device to instantly access the upload page:
 - Works seamlessly on both desktop and mobile devices
 
 ## Setup
+
+### Installation via Homebrew
+
+**Requirements:**
+- Node.js 22.18.0 or higher
+- Bun runtime (https://bun.com/docs/installation)
+
+```bash
+brew tap totherush/tap
+brew install qrup
+```
+
+To update to the latest version:
+```bash
+brew untap totherush/tap
+brew tap totherush/tap
+brew update-reset
+brew cleanup -s
+brew fetch qrup --force
+brew reinstall qrup
+```
+
+### Manual Setup
 
 1. Install dependencies:
 ```bash
