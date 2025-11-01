@@ -70,3 +70,19 @@ bun install
 - Node.js 22.18.0 or higher
 - Bun runtime installed on the server machine
 - Both devices on the same local network
+
+## Release Process
+
+1. Ensure all changes are committed and pushed
+2. Update version in [package.json](file:///Users/tobiastrusch/projects/upload-page/package.json)
+3. Run the release command:
+   ```bash
+   bun run release
+   ```
+4. Review and commit the generated [CHANGELOG.md](file:///Users/tobiastrusch/projects/upload-page/CHANGELOG.md)
+5. Create and push a git tag:
+   ```bash
+   git tag v0.1.2
+   git push origin v0.1.2
+   ```
+6. Update the Homebrew formula with the new version and tarball SHA256
