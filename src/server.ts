@@ -19,14 +19,18 @@ const getArgValue = (flag: string): string | undefined => {
 };
 
 const app = express();
-const PORT = Number.parseInt(getArgValue('--port') || getArgValue('-p') || process.env.PORT || '3000', 10);
+const PORT = Number.parseInt(
+  getArgValue('--port') || getArgValue('-p') || process.env.PORT || '3000',
+  10,
+);
 
 // Determine the correct base directory (works in both dev and prod)
 const baseDir = __dirname.endsWith('dist')
   ? path.join(__dirname, '..')
   : path.join(__dirname, '..');
 const clientDir = path.join(baseDir, 'dist', 'client');
-const uploadFolder = getArgValue('--upload') || getArgValue('-u') || process.env.UPLOAD_FOLDER || 'uploads';
+const uploadFolder =
+  getArgValue('--upload') || getArgValue('-u') || process.env.UPLOAD_FOLDER || 'uploads';
 const uploadDir = path.isAbsolute(uploadFolder) ? uploadFolder : path.join(baseDir, uploadFolder);
 
 if (!fs.existsSync(uploadDir)) {
