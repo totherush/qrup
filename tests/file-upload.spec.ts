@@ -81,4 +81,27 @@ test.describe('File Upload E2E', () => {
 
     await expect(page.getByText('Upload Successful').first()).toBeVisible({ timeout: 10000 });
   });
+
+  test('should display uploaded file in file browser after upload', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(page.getByText('Upload Files')).toBeVisible();
+    await expect(page.getByText('File Browser')).toBeVisible();
+
+    const fileInput = page.locator('input[type="file"]');
+    const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
+
+    await fileInput.setInputFiles(filePath);
+
+    await expect(page.getByText('test-file-3mb.bin')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Upload files' }).click();
+
+    await expect(page.getByText('Upload Successful')).toBeVisible({ timeout: 10000 });
+
+    const fileBrowserSection = page.locator('.bg-white').filter({ hasText: 'File Browser' });
+    await expect(fileBrowserSection.getByText(/test-file-3mb\.bin/).first()).toBeVisible({ timeout: 5000 });
+
+    await expect(fileBrowserSection.getByText('📄').first()).toBeVisible();
+  });
 });

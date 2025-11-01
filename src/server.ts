@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path, { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import archiver from 'archiver';
 import cors from 'cors';
 import express, { type Request, type Response } from 'express';
 import multer, { type StorageEngine } from 'multer';
@@ -58,6 +59,133 @@ app.post('/api/upload', upload.array('files'), (req: Request, res: Response) => 
     message: `${req.files.length} file(s) uploaded successfully`,
     files: fileNames,
   });
+});
+
+interface FileNode {
+  name: string;
+  type: 'file' | 'directory';
+  path: string;
+  size?: number;
+  children?: FileNode[];
+}
+
+function buildFileTree(dirPath: string, basePath = ''): FileNode[] {
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+  const nodes: FileNode[] = [];
+
+  for (const entry of entries) {
+    const fullPath = path.join(dirPath, entry.name);
+    const relativePath = path.join(basePath, entry.name);
+
+    if (entry.isDirectory()) {
+      nodes.push({
+        name: entry.name,
+        type: 'directory',
+        path: relativePath,
+        children: buildFileTree(fullPath, relativePath),
+      });
+    } else {
+      const stats = fs.statSync(fullPath);
+      nodes.push({
+        name: entry.name,
+        type: 'file',
+        path: relativePath,
+        size: stats.size,
+      });
+    }
+  }
+
+  return nodes.sort((a, b) => {
+    if (a.type === b.type) return a.name.localeCompare(b.name);
+    return a.type === 'directory' ? -1 : 1;
+  });
+}
+
+app.get('/api/files', (_req: Request, res: Response) => {
+  try {
+    const fileTree = buildFileTree(uploadDir);
+    res.json({ files: fileTree });
+  } catch (error) {
+    console.error('Error reading files:', error);
+    res.status(500).json({ error: 'Failed to read files' });
+  }
+});
+
+app.get('/api/download', (req: Request, res: Response) => {
+  try {
+    const files = req.query.files;
+
+    if (!files) {
+      return res.status(400).json({ error: 'No files specified' });
+    }
+
+    const filePaths = Array.isArray(files) ? files : [files];
+
+    if (filePaths.length === 0) {
+      return res.status(400).json({ error: 'No files specified' });
+    }
+
+    console.log('Download request for files:', filePaths);
+
+    if (filePaths.length === 1) {
+      const relativePath = filePaths[0] as string;
+      const filePath = path.resolve(uploadDir, relativePath);
+
+      console.log('Single file download:', { relativePath, filePath, uploadDir });
+
+      if (!filePath.startsWith(path.resolve(uploadDir))) {
+        console.error('Path traversal attempt:', filePath);
+        return res.status(403).json({ error: 'Access denied' });
+      }
+
+      if (!fs.existsSync(filePath)) {
+        console.error('File not found:', filePath);
+        return res.status(404).json({ error: 'File not found' });
+      }
+
+      const fileName = path.basename(filePath);
+      console.log('Downloading file:', fileName);
+      return res.download(filePath, fileName);
+    } else {
+      console.log('Creating ZIP archive for multiple files');
+      const archive = archiver('zip', { zlib: { level: 9 } });
+
+      archive.on('error', (err) => {
+        console.error('Archive error:', err);
+        throw err;
+      });
+
+      res.attachment('files.zip');
+      archive.pipe(res);
+
+      let fileCount = 0;
+      for (const file of filePaths) {
+        const relativePath = file as string;
+        const filePath = path.resolve(uploadDir, relativePath);
+
+        if (!filePath.startsWith(path.resolve(uploadDir))) {
+          console.warn('Skipping file due to path traversal:', filePath);
+          continue;
+        }
+
+        if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+          console.log('Adding to archive:', relativePath);
+          archive.file(filePath, { name: relativePath });
+          fileCount++;
+        } else {
+          console.warn('File not found or not a file:', filePath);
+        }
+      }
+
+      console.log(`Finalizing archive with ${fileCount} files`);
+      archive.finalize();
+    }
+  } catch (error) {
+    console.error('Error downloading files:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Failed to download files' });
+    }
+  }
 });
 
 app.get('*', (_req: Request, res: Response) => {
