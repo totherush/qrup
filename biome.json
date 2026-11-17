@@ -1,17 +1,25 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.2/schema.json",
-
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": { "includes": ["**", "!bun.lock", "!CHANGELOG.md"] },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
-      "suspicious": {
-        "noUnknownAtRules": "off"
-      },
+      "preset": "recommended",
       "a11y": {
-        "useKeyWithClickEvents": "off",
         "noStaticElementInteractions": "off",
-        "noSvgWithoutTitle": "off"
+        "useKeyWithClickEvents": "off"
+      },
+      "nursery": {
+        "useExplicitType": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "error"
+      },
+      "style": {
+        "useImportType": "error",
+        "noNonNullAssertion": "error"
       }
     }
   },
@@ -22,9 +30,6 @@
     "lineWidth": 100
   },
   "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "semicolons": "always"
-    }
+    "formatter": { "quoteStyle": "single", "semicolons": "always" }
   }
 }

@@ -1,128 +1,114 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { emptyUploads, fixturePath, uploadsDir } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 
 test.describe('File Upload E2E', () => {
-  test.beforeEach(async () => {
-    const uploadsDir = path.join(__dirname, '..', 'uploads');
-    if (fs.existsSync(uploadsDir)) {
-      const files = fs.readdirSync(uploadsDir);
-      for (const file of files) {
-        if (file !== '.gitkeep') {
-          try {
-            fs.unlinkSync(path.join(uploadsDir, file));
-          } catch {
-            // File may have already been deleted
-          }
-        }
-      }
-    }
-  });
-
-  test.afterEach(async () => {
-    const uploadsDir = path.join(__dirname, '..', 'uploads');
-    if (fs.existsSync(uploadsDir)) {
-      const files = fs.readdirSync(uploadsDir);
-      for (const file of files) {
-        if (file !== '.gitkeep') {
-          try {
-            fs.unlinkSync(path.join(uploadsDir, file));
-          } catch {
-            // File may have already been deleted
-          }
-        }
-      }
-    }
-  });
+  test.beforeEach(emptyUploads);
+  test.afterEach(emptyUploads);
 
   test('should upload a 3MB file successfully', async ({ page }) => {
     await page.goto('/');
-
     await expect(page.getByText('Upload Files')).toBeVisible();
 
-    const fileInput = page.locator('input[type="file"]');
-    const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
-
-    await fileInput.setInputFiles(filePath);
-
+    await page.locator('input[type="file"]').setInputFiles(fixturePath);
     await expect(page.getByText('test-file-3mb.bin')).toBeVisible();
     await expect(page.getByText('3 MB')).toBeVisible();
 
     await page.getByRole('button', { name: 'Upload files' }).click();
-
     await expect(page.getByText('Upload Successful')).toBeVisible({ timeout: 10000 });
-
-    const progressBar = page.locator('.bg-green-500');
-    await expect(progressBar).toBeVisible();
+    await expect(page.locator('.bg-green-500')).toBeVisible();
+    expect(fs.statSync(path.join(uploadsDir, 'test-file-3mb.bin')).size).toBe(
+      fs.statSync(fixturePath).size,
+    );
   });
 
-  test('should show error when clicking upload without selecting files', async ({ page }) => {
+  test('should hide the upload button until files are selected', async ({ page }) => {
     await page.goto('/');
-
     await expect(page.getByText('Upload Files')).toBeVisible();
-
-    const uploadButton = page.getByRole('button', { name: 'Upload files' });
-    await expect(uploadButton).not.toBeVisible();
+    await expect(page.getByRole('button', { name: 'Upload files' })).not.toBeVisible();
   });
 
   test('should allow removing files before upload', async ({ page }) => {
     await page.goto('/');
-
-    const fileInput = page.locator('input[type="file"]');
-    const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
-
-    await fileInput.setInputFiles(filePath);
+    await page.locator('input[type="file"]').setInputFiles(fixturePath);
     await expect(page.getByText('test-file-3mb.bin')).toBeVisible();
 
-    await page.locator('button[aria-label="Remove file"]').click();
-
+    await page.getByRole('button', { name: 'Remove file' }).click();
     await expect(page.getByText('test-file-3mb.bin')).not.toBeVisible();
   });
 
-  test('should show error when uploading duplicate file', async ({ page }) => {
+  test('should save a duplicate upload under a new name', async ({ page }) => {
     await page.goto('/');
-
     const fileInput = page.locator('input[type="file"]');
-    const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
 
-    await fileInput.setInputFiles(filePath);
+    await fileInput.setInputFiles(fixturePath);
     await page.getByRole('button', { name: 'Upload files' }).click();
     await expect(page.getByText('Upload Successful').first()).toBeVisible({ timeout: 10000 });
 
-    await fileInput.setInputFiles(filePath);
+    await fileInput.setInputFiles(fixturePath);
     await page.getByRole('button', { name: 'Upload files' }).click();
+    await expect(page.getByText('saved as test-file-3mb (1).bin')).toBeVisible({ timeout: 10000 });
+    expect(fs.readdirSync(uploadsDir).sort()).toEqual(
+      expect.arrayContaining(['test-file-3mb (1).bin', 'test-file-3mb.bin']),
+    );
+  });
 
-    await expect(page.getByText("File 'test-file-3mb.bin' already exists")).toBeVisible({
-      timeout: 10000,
-    });
+  test('should upload several files at once', async ({ page }) => {
+    await page.goto('/');
+    const content = Buffer.alloc(256 * 1024, 1);
+    await page.locator('input[type="file"]').setInputFiles(
+      ['a.bin', 'b.bin', 'c.bin', 'd.bin'].map((name) => ({
+        name,
+        mimeType: 'application/octet-stream',
+        buffer: content,
+      })),
+    );
+    await page.getByRole('button', { name: 'Upload files' }).click();
+    await expect(page.getByText('Upload Successful')).toHaveCount(4, { timeout: 10000 });
+    expect(
+      fs
+        .readdirSync(uploadsDir)
+        .filter((name) => name.endsWith('.bin'))
+        .sort(),
+    ).toEqual(['a.bin', 'b.bin', 'c.bin', 'd.bin']);
   });
 
   test('should display uploaded file in file browser after upload', async ({ page }) => {
     await page.goto('/');
-
-    await expect(page.getByText('Upload Files')).toBeVisible();
-    await expect(page.getByText('File Browser')).toBeVisible();
-
-    const fileInput = page.locator('input[type="file"]');
-    const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
-
-    await fileInput.setInputFiles(filePath);
-
-    const uploadSection = page.locator('.bg-white').filter({ hasText: 'Upload Files' });
-    await expect(uploadSection.getByText('test-file-3mb.bin')).toBeVisible();
-
+    await page.locator('input[type="file"]').setInputFiles(fixturePath);
     await page.getByRole('button', { name: 'Upload files' }).click();
-
     await expect(page.getByText('Upload Successful')).toBeVisible({ timeout: 10000 });
 
-    const fileBrowserSection = page.locator('.bg-white').filter({ hasText: 'File Browser' });
-    await expect(fileBrowserSection.getByText(/test-file-3mb\.bin/).first()).toBeVisible({
-      timeout: 10000,
-    });
+    const fileBrowser = page.locator('section').filter({ hasText: 'File Browser' });
+    await expect(fileBrowser.getByText('test-file-3mb.bin')).toBeVisible({ timeout: 10000 });
+  });
+
+  test('should download a selected folder as a ZIP', async ({ page }) => {
+    fs.mkdirSync(path.join(uploadsDir, 'photos'));
+    fs.writeFileSync(path.join(uploadsDir, 'photos', 'one.txt'), 'one');
+    await page.goto('/');
+
+    await page.getByRole('checkbox', { name: 'Select photos' }).check();
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download (1)' }).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe('photos.zip');
+    const zip = fs.readFileSync(await download.path());
+    expect(zip.subarray(0, 2).toString()).toBe('PK');
+    expect(zip.includes('photos/one.txt')).toBe(true);
+  });
+});
+
+test.describe('API', () => {
+  test('should refuse paths outside the upload folder', async ({ request }) => {
+    for (const files of ['../package.json', '../uploads2/x', '/etc/hosts']) {
+      const response = await request.get('/api/download', { params: { files } });
+      expect(response.status(), files).toBe(404);
+    }
+    const response = await request.delete(`/api/upload/${encodeURIComponent('../package.json')}`);
+    expect(response.status()).toBe(403);
   });
 });

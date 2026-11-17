@@ -1,192 +1,85 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
+import { emptyUploads, fixturePath, uploadsDir } from './helpers';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const X_ICON = 'svg path[d*="M6 18L18 6M6 6l12 12"]';
+const BIN_ICON = 'svg path[d*="M19 7l-.867 12.142"]';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Upload States and Icons', () => {
-  test.beforeEach(async () => {
-    const uploadsDir = path.join(__dirname, '..', 'uploads');
-    if (fs.existsSync(uploadsDir)) {
-      const files = fs.readdirSync(uploadsDir);
-      for (const file of files) {
-        if (file !== '.gitkeep') {
-          try {
-            fs.unlinkSync(path.join(uploadsDir, file));
-          } catch {
-            // File may have already been deleted
-          }
-        }
-      }
-    }
-  });
+async function selectAndUpload(page: Page): Promise<void> {
+  await page.locator('input[type="file"]').setInputFiles(fixturePath);
+  await page.getByRole('button', { name: 'Upload files' }).click();
+}
 
-  test.afterEach(async () => {
-    const uploadsDir = path.join(__dirname, '..', 'uploads');
-    if (fs.existsSync(uploadsDir)) {
-      const files = fs.readdirSync(uploadsDir);
-      for (const file of files) {
-        if (file !== '.gitkeep') {
-          try {
-            fs.unlinkSync(path.join(uploadsDir, file));
-          } catch {
-            // File may have already been deleted
-          }
-        }
-      }
-    }
-  });
+test.describe('Upload States and Icons', () => {
+  test.beforeEach(emptyUploads);
+  test.afterEach(emptyUploads);
 
   test('should show X icon for pending state', async ({ page }) => {
     await page.goto('/');
-
-    const fileInput = page.locator('input[type="file"]');
-    const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
-
-    await fileInput.setInputFiles(filePath);
-
-    await expect(page.getByText('test-file-3mb.bin')).toBeVisible();
-
-    const removeButton = page.locator('button[aria-label="Remove file"]');
-    await expect(removeButton).toBeVisible();
-
-    const xIcon = removeButton.locator('svg path[d*="M6 18L18 6M6 6l12 12"]');
-    await expect(xIcon).toBeVisible();
+    await page.locator('input[type="file"]').setInputFiles(fixturePath);
+    await expect(page.getByRole('button', { name: 'Remove file' }).locator(X_ICON)).toBeVisible();
   });
 
-  test('should remove file from pending state when X icon is clicked', async ({ page }) => {
-    await page.goto('/');
-
-    const fileInput = page.locator('input[type="file"]');
-    const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
-
-    await fileInput.setInputFiles(filePath);
-    
-    const uploadSection = page.locator('.bg-white').filter({ hasText: 'Upload Files' });
-    await expect(uploadSection.getByText('test-file-3mb.bin')).toBeVisible();
-
-    await page.locator('button[aria-label="Remove file"]').click();
-
-    await expect(uploadSection.getByText('test-file-3mb.bin')).not.toBeVisible();
-  });
-
-  test('should show stop icon during upload', async ({ page }) => {
-    await page.goto('/');
-
-    await page.route('**/api/upload', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      await route.continue();
-    });
-
-    const fileInput = page.locator('input[type="file"]');
-    const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
-
-    await fileInput.setInputFiles(filePath);
-    await page.getByRole('button', { name: 'Upload files' }).click();
-
-    const stopButton = page.locator('button[aria-label="Stop upload"]');
-    await expect(stopButton).toBeVisible({ timeout: 1000 });
-
-    const stopIcon = stopButton.locator('svg rect');
-    await expect(stopIcon).toBeVisible();
-  });
-
-  test('should stop upload when stop icon is clicked', async ({ page }) => {
-    await page.goto('/');
-
+  test('should show stop icon during upload and remove the row when stopped', async ({ page }) => {
     await page.route('**/api/upload', async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 5000));
-      await route.fulfill({
-        status: 200,
-        body: JSON.stringify({ success: true, files: ['test-file.bin'] }),
-      });
+      await route.fulfill({ status: 200, json: { success: true, files: ['test-file-3mb.bin'] } });
     });
+    await page.goto('/');
+    await selectAndUpload(page);
 
-    const fileInput = page.locator('input[type="file"]');
-    const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
-
-    await fileInput.setInputFiles(filePath);
-    await page.getByRole('button', { name: 'Upload files' }).click();
-
-    const stopButton = page.locator('button[aria-label="Stop upload"]');
-    await expect(stopButton).toBeVisible({ timeout: 1000 });
-
+    const stopButton = page.getByRole('button', { name: 'Stop upload' });
+    await expect(stopButton.locator('svg rect')).toBeVisible({ timeout: 1000 });
     await stopButton.click();
-
-    // File should be removed from UI immediately after stopping
     await expect(page.getByText('test-file-3mb.bin')).not.toBeVisible({ timeout: 2000 });
   });
 
-  test('should show bin icon after successful upload', async ({ page }) => {
+  test('should show bin icon after successful upload and delete the file', async ({ page }) => {
     await page.goto('/');
-
-    const fileInput = page.locator('input[type="file"]');
-    const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
-
-    await fileInput.setInputFiles(filePath);
-    await page.getByRole('button', { name: 'Upload files' }).click();
-
+    await selectAndUpload(page);
     await expect(page.getByText('Upload Successful')).toBeVisible({ timeout: 10000 });
 
-    const deleteButton = page.locator('button[aria-label="Delete file"]');
-    await expect(deleteButton).toBeVisible();
-
-    const binIcon = deleteButton.locator('svg path[d*="M19 7l-.867 12.142"]');
-    await expect(binIcon).toBeVisible();
+    const deleteButton = page.getByRole('button', { name: 'Delete file' });
+    await expect(deleteButton.locator(BIN_ICON)).toBeVisible();
+    await deleteButton.click();
+    await expect(page.getByText('Upload folder is empty')).toBeVisible();
+    expect(fs.existsSync(path.join(uploadsDir, 'test-file-3mb.bin'))).toBe(false);
   });
 
-  test('should show bin icon after failed upload', async ({ page }) => {
+  test('should keep the existing file when dismissing a failed upload', async ({ page }) => {
+    const existing = path.join(uploadsDir, 'test-file-3mb.bin');
+    fs.writeFileSync(existing, 'already here');
+    await page.route('**/api/upload', (route) =>
+      route.fulfill({ status: 500, json: { error: 'Disk full' } }),
+    );
     await page.goto('/');
+    await selectAndUpload(page);
+    await expect(page.getByText('Disk full')).toBeVisible({ timeout: 5000 });
 
-    await page.route('**/api/upload', async (route) => {
-      await route.fulfill({
-        status: 500,
-        body: JSON.stringify({ error: 'Upload failed' }),
-      });
-    });
-
-    const fileInput = page.locator('input[type="file"]');
-    const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
-
-    await fileInput.setInputFiles(filePath);
-    await page.getByRole('button', { name: 'Upload files' }).click();
-
-    await expect(page.getByText('Upload failed')).toBeVisible({ timeout: 5000 });
-
-    const deleteButton = page.locator('button[aria-label="Delete file"]');
-    await expect(deleteButton).toBeVisible();
-
-    const binIcon = deleteButton.locator('svg path[d*="M19 7l-.867 12.142"]');
-    await expect(binIcon).toBeVisible();
+    const removeButton = page.getByRole('button', { name: 'Remove file' });
+    await expect(removeButton.locator(X_ICON)).toBeVisible();
+    await removeButton.click();
+    await expect(page.getByText('Disk full')).not.toBeVisible();
+    // Give a wrongly sent DELETE time to reach the server before checking.
+    await page.waitForTimeout(500);
+    expect(fs.readFileSync(existing, 'utf8')).toBe('already here');
   });
 
   test('should transition from X to stop to bin icon', async ({ page }) => {
-    await page.goto('/');
-
     await page.route('**/api/upload', async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       await route.continue();
     });
-
-    const fileInput = page.locator('input[type="file"]');
-    const filePath = path.join(__dirname, 'fixtures', 'test-file-3mb.bin');
-
-    await fileInput.setInputFiles(filePath);
-
-    const removeButton = page.locator('button[aria-label="Remove file"]');
-    await expect(removeButton).toBeVisible();
+    await page.goto('/');
+    await page.locator('input[type="file"]').setInputFiles(fixturePath);
+    await expect(page.getByRole('button', { name: 'Remove file' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Upload files' }).click();
-
-    const stopButton = page.locator('button[aria-label="Stop upload"]');
-    await expect(stopButton).toBeVisible({ timeout: 1000 });
-
+    await expect(page.getByRole('button', { name: 'Stop upload' })).toBeVisible({ timeout: 1000 });
     await expect(page.getByText('Upload Successful')).toBeVisible({ timeout: 10000 });
-
-    const deleteButton = page.locator('button[aria-label="Delete file"]');
-    await expect(deleteButton).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Delete file' })).toBeVisible();
   });
 });
