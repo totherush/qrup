@@ -10,7 +10,7 @@ export default defineConfig({
   use: {
     // Phones open the app over plain HTTP on a LAN address, which is not a secure context,
     // so APIs such as crypto.randomUUID() are missing. A non-localhost host reproduces that.
-    baseURL: 'http://qrup.test:3000',
+    baseURL: 'http://qrup.test:3100',
     launchOptions: { args: ['--host-resolver-rules=MAP qrup.test 127.0.0.1'] },
     trace: 'on-first-retry',
   },
@@ -24,7 +24,9 @@ export default defineConfig({
 
   webServer: {
     command: 'bun run start',
-    url: 'http://localhost:3000',
+    url: 'http://localhost:3100',
+    // A port and upload folder of its own, so a qrup you run on port 3000 and its uploads/ are never touched.
+    env: { PORT: '3100', UPLOAD_FOLDER: 'tmp/e2e-uploads' },
     reuseExistingServer: !process.env.CI,
   },
 });
