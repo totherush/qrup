@@ -1,6 +1,31 @@
 # Changelog
 
 
+## v0.2.1
+
+[compare changes](https://github.com/totherush/qrup/compare/v0.2.0...v0.2.1)
+
+### 🚀 Enhancements
+
+- Compile standalone binaries and attach them to releases ([86e1c62](https://github.com/totherush/qrup/commit/86e1c62))
+
+### 📖 Documentation
+
+- Add agent guide and ignore local PLAN.md ([8030777](https://github.com/totherush/qrup/commit/8030777))
+- Describe binary install and the release workflow ([51efbb8](https://github.com/totherush/qrup/commit/51efbb8))
+
+### ✅ Tests
+
+- **e2e:** Use a separate port and upload folder ([94ec71e](https://github.com/totherush/qrup/commit/94ec71e))
+
+### 🤖 CI
+
+- **release:** Build both macOS binaries in one job ([d3ff4b2](https://github.com/totherush/qrup/commit/d3ff4b2))
+
+### ❤️ Contributors
+
+- Tobias Trusch <tobiastrusch@gmail.com>
+
 ## v0.2.0
 
 [compare changes](https://github.com/totherush/qrup/compare/v0.1.8...v0.2.0)
