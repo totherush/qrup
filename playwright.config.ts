@@ -8,7 +8,10 @@ export default defineConfig({
   workers: 1,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:3000',
+    // Phones open the app over plain HTTP on a LAN address, which is not a secure context,
+    // so APIs such as crypto.randomUUID() are missing. A non-localhost host reproduces that.
+    baseURL: 'http://qrup.test:3000',
+    launchOptions: { args: ['--host-resolver-rules=MAP qrup.test 127.0.0.1'] },
     trace: 'on-first-retry',
   },
 
