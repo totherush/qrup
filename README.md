@@ -78,15 +78,13 @@ qrup -p 8080 -u ./my-uploads
 **CLI Options:**
 
 - `--port, -p` - Server port (default: 3000)
-- `--upload, -u` - Upload directory path, can be absolute or relative (default: uploads)
+- `--upload, -u` - Upload directory path, absolute or relative to the current directory (default: `./uploads`)
 
 To update to the latest version:
 
 ```bash
-brew uninstall --force qrup
-brew untap --force totherush/tap
-brew tap totherush/tap
-brew install qrup
+brew update
+brew upgrade qrup
 ```
 
 ### Manual Setup
@@ -118,22 +116,39 @@ bun install
    - On the same device: http://localhost:3000
    - From mobile device: Scan the QR code displayed in the terminal
 
+## Project Structure
+
+```
+server/        Express server (Bun runtime)
+  index.ts     entry point: config, banner, QR code
+  app.ts       wires the API routers and the static client
+  routes/      upload + delete, file list + download
+  lib/         path safety, file tree, logging, network addresses
+client/src/    React app
+  api.ts       typed calls to the server API
+  hooks/       upload queue (parallel uploads, progress, cancel)
+  components/  upload panel, file browser
+shared/api.ts  request and response types used by both sides
+tests/         Playwright end-to-end tests
+```
+
+Checks: `bun run check` (TypeScript + Biome), `bun run test:e2e` (Playwright).
+
 ## Requirements
 
-- Node.js 22.18.0 or higher
 - Bun runtime installed on the server machine
 - Both devices on the same local network
 
 ## Release Process
 
 1. Ensure all changes are committed and pushed
-2. Update version in [package.json](file:///Users/tobiastrusch/projects/upload-page/package.json)
+2. Update version in [package.json](package.json)
 3. Run the release command:
 
    ```bash
    bun run release
    ```
-4. Review and commit the generated [CHANGELOG.md](file:///Users/tobiastrusch/projects/upload-page/CHANGELOG.md)
+4. Review and commit the generated [CHANGELOG.md](CHANGELOG.md)
 5. Create and push a git tag:
 
    ```bash
