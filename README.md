@@ -132,7 +132,7 @@ shared/api.ts  request and response types used by both sides
 tests/         Playwright end-to-end tests
 ```
 
-Checks: `bun run check` (TypeScript + Biome), `bun run test:e2e` (Playwright).
+Development needs Node 24 (see `.nvmrc`) for the build and test tools. Checks: `bun run check` (TypeScript + Biome), `bun run test:e2e` (Playwright).
 
 ## Requirements
 
