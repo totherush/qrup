@@ -24,21 +24,25 @@ Simple file uploader for local network use. Upload files from your mobile device
 ## How It Works
 
 ### 1. Start the Server
+
 When you run the application, a QR code is displayed in your terminal along with the local network URL:
 
 <img src=".github/screenshots/qr-terminal.png" alt="Terminal with QR code" width="600">
 
 ### 2. Access from Desktop
+
 Open the URL in your desktop browser to upload files locally:
 
 <img src=".github/screenshots/desktop-browser.png" alt="Desktop browser upload interface" width="600">
 
 ### 3. Access from Mobile
+
 Scan the QR code with your mobile device to instantly access the upload page:
 
 <img src=".github/screenshots/mobile-browser.png" alt="Mobile browser upload interface" width="300">
 
 ### 4. Upload Files
+
 - Drag and drop files onto the upload area
 - Or click to select files from your device
 - Files are saved to the `uploads` folder
@@ -49,6 +53,7 @@ Scan the QR code with your mobile device to instantly access the upload page:
 ### Installation via Homebrew
 
 **Requirements:**
+
 - Node.js 22.18.0 or higher
 - Bun runtime (https://bun.com/docs/installation)
 
@@ -58,6 +63,7 @@ brew install qrup
 ```
 
 **Usage:**
+
 ```bash
 # Start with default settings (port 3000, uploads folder)
 qrup
@@ -70,10 +76,12 @@ qrup -p 8080 -u ./my-uploads
 ```
 
 **CLI Options:**
+
 - `--port, -p` - Server port (default: 3000)
 - `--upload, -u` - Upload directory path, can be absolute or relative (default: uploads)
 
 To update to the latest version:
+
 ```bash
 brew uninstall --force qrup
 brew untap --force totherush/tap
@@ -95,10 +103,13 @@ bun install
      - `UPLOAD_FOLDER` - Upload directory path (default: uploads)
 
 3. Start the server:
+
    ```bash
    bun run dev
    ```
+
    Or for production:
+
    ```bash
    bun start
    ```
@@ -118,11 +129,13 @@ bun install
 1. Ensure all changes are committed and pushed
 2. Update version in [package.json](file:///Users/tobiastrusch/projects/upload-page/package.json)
 3. Run the release command:
+
    ```bash
    bun run release
    ```
 4. Review and commit the generated [CHANGELOG.md](file:///Users/tobiastrusch/projects/upload-page/CHANGELOG.md)
 5. Create and push a git tag:
+
    ```bash
    git tag v0.1.2
    git push origin v0.1.2
