@@ -1,11 +1,16 @@
 import path from 'node:path';
 
+/**
+ * The built client: a folder on disk (`dist/client`), or the files embedded in a compiled
+ * binary, keyed by URL path such as `/assets/index-abc.js`.
+ */
+export type ClientFiles = { dir: string } | { embedded: Readonly<Record<string, string>> };
+
 export interface Config {
   port: number;
   /** Absolute path of the folder uploads are saved to. */
   uploadDir: string;
-  /** Absolute path of the built client (`dist/client`). */
-  clientDir: string;
+  client: ClientFiles;
 }
 
 const DEFAULT_PORT = 3000;
@@ -36,7 +41,7 @@ function parsePort(value: string): number {
 export function loadConfig(
   args: readonly string[],
   env: NodeJS.ProcessEnv,
-  clientDir: string,
+  client: ClientFiles,
 ): Config {
   const port = readFlag(args, '--port', '-p') ?? env.PORT ?? String(DEFAULT_PORT);
   const uploadFolder =
@@ -45,6 +50,6 @@ export function loadConfig(
   return {
     port: parsePort(port),
     uploadDir: path.resolve(uploadFolder),
-    clientDir,
+    client,
   };
 }

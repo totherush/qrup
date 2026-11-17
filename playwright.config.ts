@@ -23,7 +23,8 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'bun run start',
+    // QRUP_BINARY runs the suite against a compiled binary instead, such as `dist/qrup`.
+    command: process.env.QRUP_BINARY ?? 'bun run start',
     url: 'http://localhost:3100',
     // A port and upload folder of its own, so a qrup you run on port 3000 and its uploads/ are never touched.
     env: { PORT: '3100', UPLOAD_FOLDER: 'tmp/e2e-uploads' },
