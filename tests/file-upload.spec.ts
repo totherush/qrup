@@ -104,14 +104,24 @@ test.describe('File Upload E2E', () => {
 
 test.describe('API', () => {
   // The request client resolves hosts in Node, where qrup.test only exists for the browser.
-  test.use({ baseURL: 'http://localhost:3000' });
+  test.use({ baseURL: 'http://localhost:3100' });
 
   test('should refuse paths outside the upload folder', async ({ request }) => {
-    for (const files of ['../package.json', '../uploads2/x', '/etc/hosts']) {
-      const response = await request.get('/api/download', { params: { files } });
-      expect(response.status(), files).toBe(404);
+    // Every target exists, so only the path check can turn them away. The sibling shares the
+    // upload folder's name as a prefix, which a plain `startsWith` check lets through.
+    const sibling = path.join(uploadsDir, '..', 'e2e-uploads2');
+    fs.mkdirSync(sibling, { recursive: true });
+    fs.writeFileSync(path.join(sibling, 'x'), 'outside');
+    try {
+      for (const files of ['../../package.json', '../e2e-uploads2/x', '/etc/hosts']) {
+        const response = await request.get('/api/download', { params: { files } });
+        expect(response.status(), files).toBe(404);
+      }
+      const target = encodeURIComponent('../e2e-uploads2/x');
+      expect((await request.delete(`/api/upload/${target}`)).status()).toBe(403);
+      expect(fs.existsSync(path.join(sibling, 'x'))).toBe(true);
+    } finally {
+      fs.rmSync(sibling, { recursive: true, force: true });
     }
-    const response = await request.delete(`/api/upload/${encodeURIComponent('../package.json')}`);
-    expect(response.status()).toBe(403);
   });
 });

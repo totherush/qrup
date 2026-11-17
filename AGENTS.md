@@ -7,7 +7,7 @@ Planned work lives in `PLAN.md`, a local file that is gitignored and only exists
 ## Commands
 
 - `bun run check`: TypeScript and Biome. Run it before every commit.
-- `bun run test:e2e`: Playwright end-to-end tests. The test server listens on port 3000.
+- `bun run test:e2e`: Playwright end-to-end tests. The test server uses port 3100 and `tmp/e2e-uploads`, never port 3000 or `uploads/`.
 - `bun run start`: builds and starts the server on port 3000.
 
 ## Conventions
@@ -20,4 +20,4 @@ Planned work lives in `PLAN.md`, a local file that is gitignored and only exists
 ## Pitfalls
 
 - Phones open the app over plain HTTP on a LAN address, which is not a secure context. Browser APIs that need one, such as `crypto.randomUUID()` or `navigator.clipboard`, are missing there. The E2E tests open the app via `http://qrup.test` for this reason; keep it that way.
-- `uploads/` may hold the user's real files when they run the server from this folder. Do not delete it, and check whether port 3000 is in use before running the E2E tests; use a separate worktree and port if it is.
+- `uploads/` may hold the user's real files when they run the server from this folder. Never delete or empty it, and keep the E2E tests on their own folder and port.

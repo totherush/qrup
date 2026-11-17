@@ -4,8 +4,11 @@ import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-/** The folder the test server saves uploads to (`uploads` in the repo root). */
-export const uploadsDir: string = path.join(here, '..', 'uploads');
+/**
+ * The folder the test server saves uploads to. It is separate from `uploads/`, which may hold
+ * real files, because the tests empty it before and after every test.
+ */
+export const uploadsDir: string = path.join(here, '..', 'tmp', 'e2e-uploads');
 
 export const fixturePath: string = path.join(here, 'fixtures', 'test-file-3mb.bin');
 
