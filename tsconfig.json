@@ -16,5 +16,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["server", "client/src", "shared", "tests", "*.config.ts"]
+  "include": ["server", "scripts", "client/src", "shared", "tests", "*.config.ts"]
 }

@@ -1,0 +1,92 @@
+name: Release binaries
+
+# On a pushed v* tag: compile standalone qrup binaries and attach them to that tag's GitHub release.
+# Run it by hand to build the binaries as workflow artifacts without releasing anything.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          # Baseline x64 builds do not need AVX2, so they also run on older CPUs and under Rosetta.
+          - { asset: darwin-arm64, target: bun-darwin-arm64, os: macos-latest, smoke: true }
+          - { asset: darwin-x64, target: bun-darwin-x64-baseline, os: macos-latest, smoke: false }
+          - { asset: linux-x64, target: bun-linux-x64-baseline, os: ubuntu-latest, smoke: true }
+          - { asset: linux-arm64, target: bun-linux-arm64, os: ubuntu-24.04-arm, smoke: true }
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Compile
+        run: |
+          bun run build:client
+          bun scripts/build-binary.ts ${{ matrix.target }}
+          mkdir -p out
+          mv "dist/qrup-${TARGET#bun-}" out/qrup
+        env:
+          TARGET: ${{ matrix.target }}
+
+      - name: Sign (ad hoc)
+        if: runner.os == 'macOS'
+        run: codesign --force --sign - out/qrup
+
+      - name: Smoke test
+        if: matrix.smoke
+        run: |
+          dir=$(mktemp -d)
+          (cd "$dir" && "$GITHUB_WORKSPACE/out/qrup" --port 3200 > server.log 2>&1 &)
+          for _ in $(seq 1 30); do curl -sf http://127.0.0.1:3200/api/files && break; sleep 1; done
+          curl -sf http://127.0.0.1:3200/ | grep -q '<div id="root">'
+          test -d "$dir/uploads"
+          cat "$dir/server.log"
+
+      - name: Package
+        run: tar -czf "qrup-${{ matrix.asset }}.tar.gz" -C out qrup
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qrup-${{ matrix.asset }}
+          path: qrup-${{ matrix.asset }}.tar.gz
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: qrup-*
+          merge-multiple: true
+
+      - name: Attach to the GitHub release
+        run: |
+          sha256sum qrup-*.tar.gz > SHA256SUMS
+          cat SHA256SUMS
+          gh release view "$TAG" > /dev/null 2>&1 || gh release create "$TAG" --verify-tag --generate-notes
+          gh release upload "$TAG" qrup-*.tar.gz SHA256SUMS --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
