@@ -52,10 +52,7 @@ Scan the QR code with your mobile device to instantly access the upload page:
 
 ### Installation via Homebrew
 
-**Requirements:**
-
-- Node.js 22.18.0 or higher
-- Bun runtime (https://bun.com/docs/installation)
+Works on macOS and Linux (Apple Silicon, Intel, x64, arm64). The formula installs a standalone binary, so nothing else is needed.
 
 ```bash
 brew tap totherush/tap
@@ -136,23 +133,22 @@ Development needs Node 24 (see `.nvmrc`) for the build and test tools. Checks: `
 
 ## Requirements
 
-- Bun runtime installed on the server machine
 - Both devices on the same local network
+- For the manual setup only: Bun, plus Node 24 for the build and test tools
 
 ## Release Process
 
-1. Ensure all changes are committed and pushed
-2. Update version in [package.json](package.json)
-3. Run the release command:
+1. Run the release command on an up-to-date `main`. It type-checks, lints and builds, bumps the version in package.json, updates CHANGELOG.md, and commits and tags the release:
 
    ```bash
    bun run release
    ```
-4. Review and commit the generated [CHANGELOG.md](CHANGELOG.md)
-5. Create and push a git tag:
+
+2. Push the commit and the tag:
 
    ```bash
-   git tag v0.1.2
-   git push origin v0.1.2
+   git push origin main --follow-tags
    ```
-6. Update the Homebrew formula with the new version and tarball SHA256
+
+   The tag starts the release workflow, which compiles the binaries for macOS and Linux and attaches them and `SHA256SUMS` to the GitHub release.
+3. Update `Formula/qrup.rb` in [totherush/homebrew-tap](https://github.com/totherush/homebrew-tap) with the new version and the SHA-256 values from `SHA256SUMS`.
