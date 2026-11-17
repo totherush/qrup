@@ -11,12 +11,19 @@ jobs:
   build:
     strategy:
       matrix:
+        # Each entry builds `target:asset` pairs and smoke-tests the one the runner can execute.
+        # Both macOS binaries share one job, because macOS runners are scarce and often queue for long.
+        # Baseline x64 builds do not need AVX2, so they also run on older CPUs and under Rosetta.
         include:
-          # Baseline x64 builds do not need AVX2, so they also run on older CPUs and under Rosetta.
-          - { asset: darwin-arm64, target: bun-darwin-arm64, os: macos-latest, smoke: true }
-          - { asset: darwin-x64, target: bun-darwin-x64-baseline, os: macos-latest, smoke: false }
-          - { asset: linux-x64, target: bun-linux-x64-baseline, os: ubuntu-latest, smoke: true }
-          - { asset: linux-arm64, target: bun-linux-arm64, os: ubuntu-24.04-arm, smoke: true }
+          - os: macos-latest
+            builds: bun-darwin-arm64:darwin-arm64 bun-darwin-x64-baseline:darwin-x64
+            smoke: darwin-arm64
+          - os: ubuntu-latest
+            builds: bun-linux-x64-baseline:linux-x64
+            smoke: linux-x64
+          - os: ubuntu-24.04-arm
+            builds: bun-linux-arm64:linux-arm64
+            smoke: linux-arm64
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -38,33 +45,37 @@ jobs:
       - name: Compile
         run: |
           bun run build:client
-          bun scripts/build-binary.ts ${{ matrix.target }}
-          mkdir -p out
-          mv "dist/qrup-${TARGET#bun-}" out/qrup
+          for build in $BUILDS; do
+            target="${build%%:*}" asset="${build#*:}"
+            bun scripts/build-binary.ts "$target"
+            mkdir -p "out/$asset"
+            mv "dist/qrup-${target#bun-}" "out/$asset/qrup"
+          done
         env:
-          TARGET: ${{ matrix.target }}
+          BUILDS: ${{ matrix.builds }}
 
       - name: Sign (ad hoc)
         if: runner.os == 'macOS'
-        run: codesign --force --sign - out/qrup
+        run: codesign --force --sign - out/*/qrup
 
       - name: Smoke test
-        if: matrix.smoke
         run: |
           dir=$(mktemp -d)
-          (cd "$dir" && "$GITHUB_WORKSPACE/out/qrup" --port 3200 > server.log 2>&1 &)
+          (cd "$dir" && "$GITHUB_WORKSPACE/out/$SMOKE/qrup" --port 3200 > server.log 2>&1 &)
           for _ in $(seq 1 30); do curl -sf http://127.0.0.1:3200/api/files && break; sleep 1; done
           curl -sf http://127.0.0.1:3200/ | grep -q '<div id="root">'
           test -d "$dir/uploads"
           cat "$dir/server.log"
+        env:
+          SMOKE: ${{ matrix.smoke }}
 
       - name: Package
-        run: tar -czf "qrup-${{ matrix.asset }}.tar.gz" -C out qrup
+        run: for dir in out/*; do tar -czf "qrup-$(basename "$dir").tar.gz" -C "$dir" qrup; done
 
       - uses: actions/upload-artifact@v4
         with:
-          name: qrup-${{ matrix.asset }}
-          path: qrup-${{ matrix.asset }}.tar.gz
+          name: qrup-${{ matrix.os }}
+          path: qrup-*.tar.gz
           if-no-files-found: error
 
   release:
