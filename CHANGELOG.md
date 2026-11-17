@@ -1,6 +1,35 @@
 # Changelog
 
 
+## v0.2.0
+
+[compare changes](https://github.com/totherush/qrup/compare/v0.1.8...v0.2.0)
+
+### 🩹 Fixes
+
+- **client:** Make file selection work over plain HTTP on phones ([841c592](https://github.com/totherush/qrup/commit/841c592))
+
+### 💅 Refactors
+
+- ⚠️  Restructure into server, client and shared modules; upgrade dependencies ([0fe2e1e](https://github.com/totherush/qrup/commit/0fe2e1e))
+
+### 📖 Documentation
+
+- Document project structure and Bun-only setup; run type-check in CI ([0fae249](https://github.com/totherush/qrup/commit/0fae249))
+
+### 🏡 Chore
+
+- Remove unused legacy public/index.html ([eadcde3](https://github.com/totherush/qrup/commit/eadcde3))
+- Upgrade development tooling to Node 24 ([ee78285](https://github.com/totherush/qrup/commit/ee78285))
+
+#### ⚠️ Breaking Changes
+
+- ⚠️  Restructure into server, client and shared modules; upgrade dependencies ([0fe2e1e](https://github.com/totherush/qrup/commit/0fe2e1e))
+
+### ❤️ Contributors
+
+- Tobias Trusch <tobiastrusch@gmail.com>
+
 ## v0.1.8
 
 [compare changes](https://github.com/totherush/qrup/compare/v0.1.7...v0.1.8)
