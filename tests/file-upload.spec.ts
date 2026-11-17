@@ -103,6 +103,9 @@ test.describe('File Upload E2E', () => {
 });
 
 test.describe('API', () => {
+  // The request client resolves hosts in Node, where qrup.test only exists for the browser.
+  test.use({ baseURL: 'http://localhost:3000' });
+
   test('should refuse paths outside the upload folder', async ({ request }) => {
     for (const files of ['../package.json', '../uploads2/x', '/etc/hosts']) {
       const response = await request.get('/api/download', { params: { files } });

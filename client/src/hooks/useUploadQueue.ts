@@ -4,6 +4,11 @@ import { deleteUploadedFile, UploadAbortedError, type UploadRequest, uploadFile 
 /** How many files upload at the same time. */
 const CONCURRENCY = 3;
 
+// Not crypto.randomUUID(): phones open the app over plain HTTP on a LAN address,
+// which is not a secure context, so that API is missing there.
+let lastId = 0;
+const nextId = (): string => String(++lastId);
+
 /**
  * `pending`: added, waiting for the user to start. `queued`: started, waiting for a free slot.
  */
@@ -91,7 +96,7 @@ export function useUploadQueue(onUploaded: () => void): UploadQueue {
 
   const add = useCallback((files: readonly File[]): void => {
     const added = files.map(
-      (file): UploadItem => ({ id: crypto.randomUUID(), file, status: 'pending', progress: 0 }),
+      (file): UploadItem => ({ id: nextId(), file, status: 'pending', progress: 0 }),
     );
     setItems((prev) => [...prev, ...added]);
   }, []);
