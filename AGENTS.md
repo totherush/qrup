@@ -7,7 +7,8 @@ Planned work lives in `PLAN.md`, a local file that is gitignored and only exists
 ## Commands
 
 - `bun run check`: TypeScript and Biome. Run it before every commit.
-- `bun run test:e2e`: Playwright end-to-end tests. The test server uses port 3100 and `tmp/e2e-uploads`, never port 3000 or `uploads/`.
+- `bun run test:e2e`: Playwright end-to-end tests. The test server uses port 3100 and `tmp/e2e-uploads`, never port 3000 or `uploads/`. `QRUP_BINARY=dist/qrup bun run test:e2e` runs them against a compiled binary.
+- `bun run build:binary`: compiles `dist/qrup`, a standalone executable with the client embedded.
 - `bun run start`: builds and starts the server on port 3000.
 
 ## Conventions

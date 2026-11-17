@@ -16,3 +16,4 @@ playwright/.cache/
 bun.lockb
 tmp
 PLAN.md
+*.bun-build
