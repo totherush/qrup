@@ -16,7 +16,7 @@ Planned work lives in `PLAN.md`, a local file that is gitignored and only exists
 - Explicit parameter and return types everywhere; Biome enforces this and bans `any`.
 - Request and response types shared by the server and the client live in `shared/api.ts`.
 - Commit messages use Conventional Commits (`feat(scope): …`, `fix(scope): …`); changelogen builds CHANGELOG.md from them.
-- Releases: `bun run release`, push `main` and the tag, then update `Formula/qrup.rb` in the sibling `../homebrew-tap` repo with the new tarball URL and SHA-256.
+- Releases: `bun run release`, then `git push origin main --follow-tags`. The release workflow builds the binaries, creates the GitHub release, and updates the formula in `totherush/homebrew-tap`. Do not create the GitHub release by hand.
 
 ## Pitfalls
 
