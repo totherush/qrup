@@ -1,0 +1,48 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead. Screenshots help.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: qrup version
+      description: Output of `qrup --version`
+      placeholder: 0.2.1
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install qrup?
+      options:
+        - Homebrew
+        - Prebuilt binary from a release
+        - From source
+    validations:
+      required: true
+  - type: input
+    id: computer
+    attributes:
+      label: Computer running qrup
+      description: Operating system and version
+      placeholder: macOS 26.1 on Apple Silicon
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Phone or browser used to open the page
+      placeholder: Pixel 8, Chrome 160
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal output
+      description: What qrup printed, including the activity log
+      render: text
