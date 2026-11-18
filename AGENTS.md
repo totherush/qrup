@@ -1,6 +1,6 @@
 # QRUp agent guide
 
-QRUp serves a local web page for moving files between a phone and a computer on the same network. See README.md for usage and the project structure.
+QRUp serves a local web page for moving files between a phone and a computer on the same network. See README.md for usage and CONTRIBUTING.md for the project structure.
 
 Planned work lives in `PLAN.md`, a local file that is gitignored and only exists in the maintainer's checkout. When it is present, read it before starting, and update it when you finish or discover work.
 
