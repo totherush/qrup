@@ -11,7 +11,7 @@ bun install
 bun run dev        # rebuilds the client and restarts the server on changes
 ```
 
-Open http://localhost:3000, or scan the QR code with a phone on the same network.
+Open the `Local` address it prints (it includes the access token), or scan the QR code with a phone on the same network. `QRUP_OPEN=1 bun run dev` skips the token while you work.
 
 ## Before you open a pull request
 
