@@ -19,7 +19,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:ci": "playwright test",
     "changelog": "changelogen",
-    "release": "bun run check && bun run build && changelogen --release"
+    "release": "bun run check && bun run build && changelogen --release --no-github"
   },
   "keywords": [
     "upload",

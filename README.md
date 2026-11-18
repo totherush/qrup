@@ -91,4 +91,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the project structure and how to subm
    ```
 
    The tag starts the release workflow, which compiles the binaries for macOS and Linux and attaches them and `SHA256SUMS` to the GitHub release.
-3. Update `Formula/qrup.rb` in [totherush/homebrew-tap](https://github.com/totherush/homebrew-tap) with the new version and the SHA-256 values from `SHA256SUMS`.
+   It then updates `Formula/qrup.rb` in [totherush/homebrew-tap](https://github.com/totherush/homebrew-tap) to the new version and checksums, so `brew upgrade qrup` picks it up.
