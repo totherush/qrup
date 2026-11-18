@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import express, {
@@ -35,11 +36,29 @@ function serveClient(client: ClientFiles): RequestHandler | RequestHandler[] {
   return 'dir' in client ? serveFolder(client.dir) : serveEmbedded(client.embedded);
 }
 
+/**
+ * Rejects `/api` requests without the access token, sent as the `x-qrup-token` header or, for
+ * download links, as the `t` query parameter.
+ */
+function requireToken(token: string): RequestHandler {
+  const expected = Buffer.from(token);
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const query = req.query.t;
+    const given = Buffer.from(req.get('x-qrup-token') ?? (typeof query === 'string' ? query : ''));
+    if (given.length === expected.length && timingSafeEqual(given, expected)) {
+      next();
+      return;
+    }
+    res.status(401).json({ error: 'Access denied. Scan the QR code that qrup shows again.' });
+  };
+}
+
 /** Builds the Express app: the JSON API under `/api` and the built client for every other path. */
-export function createApp({ uploadDir, client }: Config): Express {
+export function createApp({ uploadDir, client, token }: Config): Express {
   const app = express();
 
-  app.use('/api', uploadRouter(uploadDir), filesRouter(uploadDir));
+  const guard = token === undefined ? [] : [requireToken(token)];
+  app.use('/api', ...guard, uploadRouter(uploadDir), filesRouter(uploadDir));
   app.use(serveClient(client));
 
   return app;
