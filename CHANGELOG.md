@@ -7,18 +7,18 @@
 
 ### 🚀 Enhancements
 
-- **cli:** Add --help and --version ([cd7fc55](https://github.com/totherush/qrup/commit/cd7fc55))
-- ⚠️  Require an access token from the QR code by default ([09d0cef](https://github.com/totherush/qrup/commit/09d0cef))
+- **cli:** Add --help and --version ([b786fb2](https://github.com/totherush/qrup/commit/b786fb2))
+- ⚠️  Require an access token from the QR code by default ([e8dd57a](https://github.com/totherush/qrup/commit/e8dd57a))
 
 ### 📖 Documentation
 
-- **readme:** Lead with the one-line install and refresh screenshots ([69d2216](https://github.com/totherush/qrup/commit/69d2216))
-- Add contributing guide, security policy and bug report template ([a394e3c](https://github.com/totherush/qrup/commit/a394e3c))
-- Show the access token in the address and terminal screenshot ([95fe0cc](https://github.com/totherush/qrup/commit/95fe0cc))
+- **readme:** Lead with the one-line install and refresh screenshots ([51cc983](https://github.com/totherush/qrup/commit/51cc983))
+- Add contributing guide, security policy and bug report template ([c842220](https://github.com/totherush/qrup/commit/c842220))
+- Show the access token in the address and terminal screenshot ([fa574e0](https://github.com/totherush/qrup/commit/fa574e0))
 
 #### ⚠️ Breaking Changes
 
-- ⚠️  Require an access token from the QR code by default ([09d0cef](https://github.com/totherush/qrup/commit/09d0cef))
+- ⚠️  Require an access token from the QR code by default ([e8dd57a](https://github.com/totherush/qrup/commit/e8dd57a))
 
 ### ❤️ Contributors
 
@@ -30,20 +30,20 @@
 
 ### 🚀 Enhancements
 
-- Compile standalone binaries and attach them to releases ([86e1c62](https://github.com/totherush/qrup/commit/86e1c62))
+- Compile standalone binaries and attach them to releases ([299b98f](https://github.com/totherush/qrup/commit/299b98f))
 
 ### 📖 Documentation
 
-- Add agent guide and ignore local PLAN.md ([8030777](https://github.com/totherush/qrup/commit/8030777))
-- Describe binary install and the release workflow ([51efbb8](https://github.com/totherush/qrup/commit/51efbb8))
+- Add agent guide and ignore local PLAN.md ([7f22952](https://github.com/totherush/qrup/commit/7f22952))
+- Describe binary install and the release workflow ([8847141](https://github.com/totherush/qrup/commit/8847141))
 
 ### ✅ Tests
 
-- **e2e:** Use a separate port and upload folder ([94ec71e](https://github.com/totherush/qrup/commit/94ec71e))
+- **e2e:** Use a separate port and upload folder ([c1d958b](https://github.com/totherush/qrup/commit/c1d958b))
 
 ### 🤖 CI
 
-- **release:** Build both macOS binaries in one job ([d3ff4b2](https://github.com/totherush/qrup/commit/d3ff4b2))
+- **release:** Build both macOS binaries in one job ([87e4205](https://github.com/totherush/qrup/commit/87e4205))
 
 ### ❤️ Contributors
 
@@ -55,24 +55,24 @@
 
 ### 🩹 Fixes
 
-- **client:** Make file selection work over plain HTTP on phones ([841c592](https://github.com/totherush/qrup/commit/841c592))
+- **client:** Make file selection work over plain HTTP on phones ([ec02384](https://github.com/totherush/qrup/commit/ec02384))
 
 ### 💅 Refactors
 
-- ⚠️  Restructure into server, client and shared modules; upgrade dependencies ([0fe2e1e](https://github.com/totherush/qrup/commit/0fe2e1e))
+- ⚠️  Restructure into server, client and shared modules; upgrade dependencies ([95175b1](https://github.com/totherush/qrup/commit/95175b1))
 
 ### 📖 Documentation
 
-- Document project structure and Bun-only setup; run type-check in CI ([0fae249](https://github.com/totherush/qrup/commit/0fae249))
+- Document project structure and Bun-only setup; run type-check in CI ([d6758fc](https://github.com/totherush/qrup/commit/d6758fc))
 
 ### 🏡 Chore
 
-- Remove unused legacy public/index.html ([eadcde3](https://github.com/totherush/qrup/commit/eadcde3))
-- Upgrade development tooling to Node 24 ([ee78285](https://github.com/totherush/qrup/commit/ee78285))
+- Remove unused legacy public/index.html ([6696bbb](https://github.com/totherush/qrup/commit/6696bbb))
+- Upgrade development tooling to Node 24 ([2d961d8](https://github.com/totherush/qrup/commit/2d961d8))
 
 #### ⚠️ Breaking Changes
 
-- ⚠️  Restructure into server, client and shared modules; upgrade dependencies ([0fe2e1e](https://github.com/totherush/qrup/commit/0fe2e1e))
+- ⚠️  Restructure into server, client and shared modules; upgrade dependencies ([95175b1](https://github.com/totherush/qrup/commit/95175b1))
 
 ### ❤️ Contributors
 
@@ -84,7 +84,7 @@
 
 ### 🩹 Fixes
 
-- **ui:** Handle permission errors and improve folder selection ([79247f6](https://github.com/totherush/qrup/commit/79247f6))
+- **ui:** Handle permission errors and improve folder selection ([c8b15bd](https://github.com/totherush/qrup/commit/c8b15bd))
 
 ### ❤️ Contributors
 
@@ -96,7 +96,7 @@
 
 ### 🩹 Fixes
 
-- **deps:** Add missing archiver dependency ([4885c30](https://github.com/totherush/qrup/commit/4885c30))
+- **deps:** Add missing archiver dependency ([737b53d](https://github.com/totherush/qrup/commit/737b53d))
 
 ### ❤️ Contributors
 
@@ -112,11 +112,11 @@
 
 ### 🚀 Enhancements
 
-- **cli:** Add port and upload folder CLI arguments ([7d235cd](https://github.com/totherush/qrup/commit/7d235cd))
+- **cli:** Add port and upload folder CLI arguments ([11f3480](https://github.com/totherush/qrup/commit/11f3480))
 
 ### 📖 Documentation
 
-- **readme:** Add homebrew installation instructions ([01f4f16](https://github.com/totherush/qrup/commit/01f4f16))
+- **readme:** Add homebrew installation instructions ([13d08f3](https://github.com/totherush/qrup/commit/13d08f3))
 
 ### ❤️ Contributors
 
@@ -128,7 +128,7 @@
 
 ### 🚀 Enhancements
 
-- **server:** Display upload folder path on startup ([152aab5](https://github.com/totherush/qrup/commit/152aab5))
+- **server:** Display upload folder path on startup ([a0e4abc](https://github.com/totherush/qrup/commit/a0e4abc))
 
 ### ❤️ Contributors
 
@@ -164,7 +164,7 @@
 - **config:** Add Biome linter and agent instructions ([61c352c](https://github.com/totherush/qrup/commit/61c352c))
 - **config:** Migrate to Bun runtime and improve dev workflow ([0d71786](https://github.com/totherush/qrup/commit/0d71786))
 - Remove .agents folder from repository ([f72ec69](https://github.com/totherush/qrup/commit/f72ec69))
-- **release:** V0.1.1 ([b327d8d](https://github.com/totherush/qrup/commit/b327d8d))
+- **release:** V0.1.1 ([d031740](https://github.com/totherush/qrup/commit/d031740))
 
 ### ✅ Tests
 
