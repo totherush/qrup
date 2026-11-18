@@ -2,7 +2,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-Move files between your phone and your computer over Wi-Fi. Run `qrup`, scan the QR code, and use the page that opens on your phone. No app, no account, no cloud: files stay on your network.
+Start qrup on your Mac or Linux machine and share files with any device on your network: phones, tablets, or other computers. Run `qrup`, scan the QR code, and use the page that opens in the device's browser. No app, no account, no cloud: files stay on your network.
+
+Website: [qrup.me](https://qrup.me)
 
 ```bash
 brew install totherush/tap/qrup
@@ -17,13 +19,13 @@ qrup
 
    <img src=".github/screenshots/qr-terminal.png" alt="Terminal with QR code" width="600">
 
-2. **Scan the QR code** with your phone's camera. The upload page opens in the phone's browser:
+2. **Scan the QR code** with your phone's camera, or open the printed `Network` address (including its `?t=…` part) on any other device, such as a tablet or a Windows laptop. The upload page opens in its browser:
 
    <img src=".github/screenshots/mobile-browser.png" alt="qrup on a phone" width="300">
 
 3. **Send files** either way:
-   - From the phone: select photos, videos, or other files. Up to three upload at a time, and each shows its progress.
-   - To the phone: tick files in the file browser and tap Download. Several files or a folder arrive as one ZIP.
+   - From the device: select photos, videos, or other files. Up to three upload at a time, and each shows its progress.
+   - To the device: tick files in the file browser and tap Download. Several files or a folder arrive as one ZIP.
 
    The same page works in a desktop browser, with drag and drop. Open the `Local` address qrup prints, including its `?t=…` part:
 
@@ -61,7 +63,7 @@ qrup --help                   # all options
 | `-v`, `--version` |                      |             | Print the version                                            |
 | `-h`, `--help`    |                      |             | Print the help                                               |
 
-The first time it runs, macOS may ask whether qrup may accept incoming network connections. Allow it, or your phone cannot reach the page.
+The first time it runs, macOS may ask whether qrup may accept incoming network connections. Allow it, or other devices cannot reach the page.
 
 ## Development
 
