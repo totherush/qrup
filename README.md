@@ -13,7 +13,7 @@ qrup
 
 ## How it works
 
-1. **Start qrup** in a terminal. It prints the local network address and a QR code:
+1. **Start qrup** in a terminal. It prints the page's address, which includes a new access token on every start, and the same address as a QR code:
 
    <img src=".github/screenshots/qr-terminal.png" alt="Terminal with QR code" width="600">
 
@@ -25,7 +25,7 @@ qrup
    - From the phone: select photos, videos, or other files. Up to three upload at a time, and each shows its progress.
    - To the phone: tick files in the file browser and tap Download. Several files or a folder arrive as one ZIP.
 
-   The same page works in a desktop browser, with drag and drop:
+   The same page works in a desktop browser, with drag and drop. Open the `Local` address qrup prints, including its `?t=…` part:
 
    <img src=".github/screenshots/desktop-browser.png" alt="qrup in a desktop browser" width="600">
 
