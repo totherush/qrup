@@ -14,25 +14,38 @@ Options:
   -p, --port <port>      Port to listen on (default: 3000, or $PORT)
   -u, --upload <folder>  Folder to save uploads to, relative to the current
                          directory (default: ./uploads, or $UPLOAD_FOLDER)
+      --open             Let anyone on the network connect, without the access
+                         code in the QR code (or set QRUP_OPEN=1)
   -h, --help             Show this help
   -v, --version          Show the version
 
-Scan the QR code it prints with your phone. Both devices must be on the same network.`;
+Scan the QR code it prints with your phone. Both devices must be on the same network.
+Only devices that open the printed address, which contains a new access code on every
+start, can connect.`;
 
-function printBanner({ port, uploadDir }: Config): void {
+const useColor: boolean = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
+const yellow = (text: string): string => (useColor ? `\x1b[33m${text}\x1b[0m` : text);
+
+function printBanner({ port, uploadDir, token }: Config): void {
   const [address, ...otherAddresses] = networkAddresses();
+  const query = token === undefined ? '' : `/?t=${token}`;
   console.log('Server running on:');
-  console.log(`  Local:   http://localhost:${port}`);
-  if (!address) {
+  console.log(`  Local:   http://localhost:${port}${query}`);
+  if (address) {
+    console.log(`  Network: http://${address}:${port}${query}`);
+    for (const other of otherAddresses) console.log(`           http://${other}:${port}${query}`);
+  } else {
     console.log('  Network: No network interface found');
-    console.log(`\nUpload folder: ${uploadDir}\n`);
-    return;
   }
-
-  const networkUrl = `http://${address}:${port}`;
-  console.log(`  Network: ${networkUrl}`);
-  for (const other of otherAddresses) console.log(`           http://${other}:${port}`);
   console.log(`\nUpload folder: ${uploadDir}\n`);
+  if (token === undefined) {
+    console.log(
+      yellow('⚠ Open mode: anyone on this network can list, download, and delete these files.\n'),
+    );
+  }
+  if (!address) return;
+
+  const networkUrl = `http://${address}:${port}${query}`;
   console.log('Scan QR code with your mobile device:\n');
   qrcode.generate(networkUrl, { small: true });
   console.log('\nActivity log:');

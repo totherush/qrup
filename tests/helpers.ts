@@ -10,6 +10,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
  */
 export const uploadsDir: string = path.join(here, '..', 'tmp', 'e2e-uploads');
 
+/** Fixed access token for the test server (see playwright.config.ts). */
+export const token: string = 'e2e-test-token';
+
+/** The app's start page, as opened from the QR code. */
+export const startUrl: string = `/?t=${token}`;
+
 export const fixturePath: string = path.join(here, 'fixtures', 'test-file-3mb.bin');
 
 /** Removes everything in the uploads folder except the server's temp folder. */

@@ -27,7 +27,7 @@ export default defineConfig({
     command: process.env.QRUP_BINARY ?? 'bun run start',
     url: 'http://localhost:3100',
     // A port and upload folder of its own, so a qrup you run on port 3000 and its uploads/ are never touched.
-    env: { PORT: '3100', UPLOAD_FOLDER: 'tmp/e2e-uploads' },
+    env: { PORT: '3100', UPLOAD_FOLDER: 'tmp/e2e-uploads', QRUP_TOKEN: 'e2e-test-token' },
     reuseExistingServer: !process.env.CI,
   },
 });

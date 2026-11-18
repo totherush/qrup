@@ -9,7 +9,7 @@ brew install totherush/tap/qrup
 qrup
 ```
 
-> ⚠️ **Local network only.** Anyone on the same network who opens the page can list, download, and delete files in the upload folder. Do not expose qrup to the internet.
+> 🔒 **Only devices that scan the QR code can connect.** The code contains a new access token every time qrup starts. Traffic is plain HTTP, so use qrup on networks you trust, and never expose it to the internet. See [SECURITY.md](SECURITY.md).
 
 ## How it works
 
@@ -57,6 +57,7 @@ qrup --help                   # all options
 | ----------------- | -------------------- | ----------- | ------------------------------------------------------------ |
 | `-p`, `--port`    | `PORT`               | `3000`      | Port to listen on                                            |
 | `-u`, `--upload`  | `UPLOAD_FOLDER`      | `./uploads` | Upload folder, absolute or relative to the current directory |
+| `--open`          | `QRUP_OPEN=1`        | off         | Let anyone on the network connect, without the access token  |
 | `-v`, `--version` |                      |             | Print the version                                            |
 | `-h`, `--help`    |                      |             | Print the help                                               |
 

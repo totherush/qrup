@@ -2,11 +2,13 @@
 
 ## What qrup protects against, and what it does not
 
-qrup is meant for a trusted local network, such as your home Wi-Fi. It has no login: anyone on the same network who opens its address can list, download, upload, and delete files in the upload folder. Traffic is plain HTTP, so others on the network can read it.
+Every time qrup starts, it creates a random access token and puts it in the address it prints and in the QR code. Only devices that open that address can list, download, upload, or delete files. Restarting qrup creates a new token, so old links stop working.
 
-Do not run qrup on public or shared Wi-Fi you do not trust, and do not expose it to the internet. Stop it (Ctrl+C) when you are done.
+`qrup --open` (or `QRUP_OPEN=1`) turns the token off. Then anyone on the same network who opens the address can access the upload folder, and qrup prints a warning.
 
-qrup does protect the rest of your computer: requests cannot read or delete files outside the upload folder.
+Traffic is plain HTTP. Someone who can read traffic on your network can see the token and the files. Use qrup on networks you trust, do not expose it to the internet, and stop it (Ctrl+C) when you are done.
+
+qrup also protects the rest of your computer: requests cannot read or delete files outside the upload folder.
 
 ## Reporting a vulnerability
 
