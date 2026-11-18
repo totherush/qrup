@@ -1,6 +1,29 @@
 # Changelog
 
 
+## v0.2.2
+
+[compare changes](https://github.com/totherush/qrup/compare/v0.2.1...v0.2.2)
+
+### 🚀 Enhancements
+
+- **cli:** Add --help and --version ([cd7fc55](https://github.com/totherush/qrup/commit/cd7fc55))
+- ⚠️  Require an access token from the QR code by default ([09d0cef](https://github.com/totherush/qrup/commit/09d0cef))
+
+### 📖 Documentation
+
+- **readme:** Lead with the one-line install and refresh screenshots ([69d2216](https://github.com/totherush/qrup/commit/69d2216))
+- Add contributing guide, security policy and bug report template ([a394e3c](https://github.com/totherush/qrup/commit/a394e3c))
+- Show the access token in the address and terminal screenshot ([95fe0cc](https://github.com/totherush/qrup/commit/95fe0cc))
+
+#### ⚠️ Breaking Changes
+
+- ⚠️  Require an access token from the QR code by default ([09d0cef](https://github.com/totherush/qrup/commit/09d0cef))
+
+### ❤️ Contributors
+
+- Tobias Trusch <tobiastrusch@gmail.com>
+
 ## v0.2.1
 
 [compare changes](https://github.com/totherush/qrup/compare/v0.2.0...v0.2.1)
