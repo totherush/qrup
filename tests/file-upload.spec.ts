@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { emptyUploads, fixturePath, uploadsDir } from './helpers';
+import { emptyUploads, fixturePath, startUrl, token, uploadsDir } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -10,7 +10,7 @@ test.describe('File Upload E2E', () => {
   test.afterEach(emptyUploads);
 
   test('should upload a 3MB file successfully', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(startUrl);
     await expect(page.getByText('Upload Files')).toBeVisible();
 
     await page.locator('input[type="file"]').setInputFiles(fixturePath);
@@ -26,13 +26,13 @@ test.describe('File Upload E2E', () => {
   });
 
   test('should hide the upload button until files are selected', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(startUrl);
     await expect(page.getByText('Upload Files')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Upload files' })).not.toBeVisible();
   });
 
   test('should allow removing files before upload', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(startUrl);
     await page.locator('input[type="file"]').setInputFiles(fixturePath);
     await expect(page.getByText('test-file-3mb.bin')).toBeVisible();
 
@@ -41,7 +41,7 @@ test.describe('File Upload E2E', () => {
   });
 
   test('should save a duplicate upload under a new name', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(startUrl);
     const fileInput = page.locator('input[type="file"]');
 
     await fileInput.setInputFiles(fixturePath);
@@ -57,7 +57,7 @@ test.describe('File Upload E2E', () => {
   });
 
   test('should upload several files at once', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(startUrl);
     const content = Buffer.alloc(256 * 1024, 1);
     await page.locator('input[type="file"]').setInputFiles(
       ['a.bin', 'b.bin', 'c.bin', 'd.bin'].map((name) => ({
@@ -77,7 +77,7 @@ test.describe('File Upload E2E', () => {
   });
 
   test('should display uploaded file in file browser after upload', async ({ page }) => {
-    await page.goto('/');
+    await page.goto(startUrl);
     await page.locator('input[type="file"]').setInputFiles(fixturePath);
     await page.getByRole('button', { name: 'Upload files' }).click();
     await expect(page.getByText('Upload Successful')).toBeVisible({ timeout: 10000 });
@@ -89,7 +89,7 @@ test.describe('File Upload E2E', () => {
   test('should download a selected folder as a ZIP', async ({ page }) => {
     fs.mkdirSync(path.join(uploadsDir, 'photos'));
     fs.writeFileSync(path.join(uploadsDir, 'photos', 'one.txt'), 'one');
-    await page.goto('/');
+    await page.goto(startUrl);
 
     await page.getByRole('checkbox', { name: 'Select photos' }).check();
     const downloadPromise = page.waitForEvent('download');
@@ -104,7 +104,42 @@ test.describe('File Upload E2E', () => {
 
 test.describe('API', () => {
   // The request client resolves hosts in Node, where qrup.test only exists for the browser.
-  test.use({ baseURL: 'http://localhost:3100' });
+  test.use({ baseURL: 'http://localhost:3100', extraHTTPHeaders: { 'x-qrup-token': token } });
+
+  test('should reject API requests without the access token', async ({ playwright }) => {
+    // New contexts inherit `use` options, so override the token header explicitly.
+    const anonymous = await playwright.request.newContext({
+      baseURL: 'http://localhost:3100',
+      extraHTTPHeaders: {},
+    });
+    const wrong = await playwright.request.newContext({
+      baseURL: 'http://localhost:3100',
+      extraHTTPHeaders: { 'x-qrup-token': 'e2e-test-tokeX' },
+    });
+    try {
+      for (const client of [anonymous, wrong]) {
+        expect((await client.get('/api/files')).status()).toBe(401);
+        expect(
+          (
+            await client.post('/api/upload', {
+              multipart: {
+                files: { name: 'a.txt', mimeType: 'text/plain', buffer: Buffer.from('x') },
+              },
+            })
+          ).status(),
+        ).toBe(401);
+        expect((await client.delete('/api/upload/a.txt')).status()).toBe(401);
+      }
+      expect(fs.existsSync(path.join(uploadsDir, 'a.txt'))).toBe(false);
+      // Download links carry the token in the URL instead of a header.
+      expect((await anonymous.get('/api/files', { params: { t: token } })).status()).toBe(200);
+      // The page itself loads without a token, so it can tell the user to rescan.
+      expect((await anonymous.get('/')).status()).toBe(200);
+    } finally {
+      await anonymous.dispose();
+      await wrong.dispose();
+    }
+  });
 
   test('should refuse paths outside the upload folder', async ({ request }) => {
     // Every target exists, so only the path check can turn them away. The sibling shares the

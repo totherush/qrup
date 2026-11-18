@@ -2,6 +2,13 @@ import type { ErrorResponse, FileListResponse, FileNode, UploadResponse } from '
 
 const UPLOAD_TIMEOUT_MS = 30 * 60 * 1000;
 
+/**
+ * The access token from the QR code URL (`?t=…`). The server rejects `/api` requests without it,
+ * unless it runs in open mode. It stays in the address bar, so reloading the page keeps it.
+ */
+const token: string | null = new URLSearchParams(window.location.search).get('t');
+const authHeaders: Record<string, string> = token ? { 'x-qrup-token': token } : {};
+
 export interface UploadRequest {
   /** Resolves with the name the server saved the file under. */
   done: Promise<string>;
@@ -45,19 +52,23 @@ export function uploadFile(file: File, onProgress: (fraction: number) => void): 
     const body = new FormData();
     body.append('files', file);
     xhr.open('POST', '/api/upload');
+    for (const [name, value] of Object.entries(authHeaders)) xhr.setRequestHeader(name, value);
     xhr.send(body);
   });
   return { done, abort: (): void => xhr.abort() };
 }
 
 export async function deleteUploadedFile(name: string): Promise<void> {
-  const response = await fetch(`/api/upload/${encodeURIComponent(name)}`, { method: 'DELETE' });
+  const response = await fetch(`/api/upload/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+    headers: authHeaders,
+  });
   if (!response.ok) throw new Error(errorMessage(await response.json(), 'Delete failed'));
 }
 
 export async function fetchFileTree(): Promise<FileNode[]> {
-  const response = await fetch('/api/files');
-  if (!response.ok) throw new Error('Failed to load files');
+  const response = await fetch('/api/files', { headers: authHeaders });
+  if (!response.ok) throw new Error(errorMessage(await response.json(), 'Failed to load files'));
   const body = (await response.json()) as FileListResponse;
   return body.files;
 }
@@ -66,5 +77,7 @@ export async function fetchFileTree(): Promise<FileNode[]> {
 export function downloadUrl(paths: readonly string[]): string {
   const params = new URLSearchParams();
   for (const path of paths) params.append('files', path);
+  // A plain link cannot send headers, so downloads carry the token in the URL.
+  if (token) params.set('t', token);
   return `/api/download?${params.toString()}`;
 }

@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 
 /**
@@ -11,6 +12,11 @@ export interface Config {
   /** Absolute path of the folder uploads are saved to. */
   uploadDir: string;
   client: ClientFiles;
+  /**
+   * Access token every `/api` request must carry; it is part of the QR code URL.
+   * `undefined` in open mode (`--open` or `QRUP_OPEN=1`), where anyone on the network can connect.
+   */
+  token: string | undefined;
 }
 
 const DEFAULT_PORT = 3000;
@@ -47,9 +53,14 @@ export function loadConfig(
   const uploadFolder =
     readFlag(args, '--upload', '-u') ?? env.UPLOAD_FOLDER ?? DEFAULT_UPLOAD_FOLDER;
 
+  const open = args.includes('--open') || ['1', 'true'].includes(env.QRUP_OPEN ?? '');
+  // A new random token per run, unless QRUP_TOKEN fixes one (used by the E2E tests).
+  const token = open ? undefined : env.QRUP_TOKEN || randomBytes(18).toString('base64url');
+
   return {
     port: parsePort(port),
     uploadDir: path.resolve(uploadFolder),
     client,
+    token,
   };
 }
