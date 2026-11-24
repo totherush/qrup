@@ -15,7 +15,10 @@ interface TestServer {
 async function startServer(token: string | undefined, approve: ApproveJoin): Promise<TestServer> {
   // Not the test server's folder: the app clears its temp folder on start.
   const uploadDir = path.join(uploadsDir, '..', 'e2e-join-uploads');
-  const app = createApp({ port: 0, uploadDir, client: { embedded: {} }, token }, approve);
+  const app = createApp(
+    { port: 0, uploadDir, client: { embedded: {} }, token, anyNetwork: false },
+    approve,
+  );
   const server = await new Promise<ReturnType<typeof app.listen>>((resolve): void => {
     const listening = app.listen(0, '127.0.0.1', (): void => resolve(listening));
   });

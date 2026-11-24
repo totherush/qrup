@@ -1,6 +1,13 @@
 import type { Request } from 'express';
 
-export type Action = 'UPLOAD' | 'DOWNLOAD' | 'DELETE' | 'ALLOWED' | 'DENIED' | 'EXPIRED';
+export type Action =
+  | 'UPLOAD'
+  | 'DOWNLOAD'
+  | 'DELETE'
+  | 'ALLOWED'
+  | 'DENIED'
+  | 'EXPIRED'
+  | 'REFUSED';
 
 const useColor: boolean = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
 
@@ -15,6 +22,7 @@ const ACTION_COLOR: Record<Action, string> = {
   ALLOWED: '32', // green
   DENIED: '31', // red
   EXPIRED: '33', // yellow
+  REFUSED: '31', // red
 };
 
 function timestamp(date: Date): string {

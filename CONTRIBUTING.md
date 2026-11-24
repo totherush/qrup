@@ -35,6 +35,7 @@ server/                Express server, run by Bun
   app.ts               mounts the API and serves the client
   routes/              upload and delete; file list and download; join requests
   lib/                 path safety, file tree, logging, network addresses,
+                       local network check,
                        mDNS announcement, join prompt in the terminal
 client/src/            React app
   api.ts               typed calls to the server API

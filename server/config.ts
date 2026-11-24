@@ -17,6 +17,11 @@ export interface Config {
    * `undefined` in open mode (`--open` or `QRUP_OPEN=1`), where anyone on the network can connect.
    */
   token: string | undefined;
+  /**
+   * Accept connections from any address (`--any-network` or `QRUP_ANY_NETWORK=1`), such as a VPN.
+   * Otherwise only devices on the local network are served.
+   */
+  anyNetwork: boolean;
 }
 
 const DEFAULT_PORT = 3000;
@@ -53,7 +58,9 @@ export function loadConfig(
   const uploadFolder =
     readFlag(args, '--upload', '-u') ?? env.UPLOAD_FOLDER ?? DEFAULT_UPLOAD_FOLDER;
 
-  const open = args.includes('--open') || ['1', 'true'].includes(env.QRUP_OPEN ?? '');
+  const isOn = (value: string | undefined): boolean => ['1', 'true'].includes(value ?? '');
+  const open = args.includes('--open') || isOn(env.QRUP_OPEN);
+  const anyNetwork = args.includes('--any-network') || isOn(env.QRUP_ANY_NETWORK);
   // A new random token per run, unless QRUP_TOKEN fixes one (used by the E2E tests).
   const token = open ? undefined : env.QRUP_TOKEN || randomBytes(18).toString('base64url');
 
@@ -62,5 +69,6 @@ export function loadConfig(
     uploadDir: path.resolve(uploadFolder),
     client,
     token,
+    anyNetwork,
   };
 }

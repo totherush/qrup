@@ -72,8 +72,11 @@ qrup --help                   # all options
 | `-p`, `--port`    | `PORT`               | `3000`      | Port to listen on                                            |
 | `-u`, `--upload`  | `UPLOAD_FOLDER`      | `./uploads` | Upload folder, absolute or relative to the current directory |
 | `--open`          | `QRUP_OPEN=1`        | off         | Let anyone on the network connect, without the access token  |
+| `--any-network`   | `QRUP_ANY_NETWORK=1` | off         | Also accept devices outside the local network, such as a VPN |
 | `-v`, `--version` |                      |             | Print the version                                            |
 | `-h`, `--help`    |                      |             | Print the help                                               |
+
+qrup only serves devices on the local network: loopback, private IPv4 (`10/8`, `172.16/12`, `192.168/16`), link-local (`169.254/16`, `fe80::/10`), and IPv6 unique local addresses (`fc00::/7`). Every other address, such as a public IPv4 or IPv6 address or carrier-grade NAT (`100.64/10`, which Tailscale also uses), gets `403` and one `REFUSED` line per address in the activity log, even when your router forwards the port. To reach qrup over a VPN such as Tailscale on purpose, start it with `--any-network`; the banner then shows a warning.
 
 The first time it runs, macOS may ask whether qrup may accept incoming network connections. Allow it, or other devices cannot reach the page.
 

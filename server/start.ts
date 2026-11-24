@@ -18,10 +18,14 @@ Options:
                          directory (default: ./uploads, or $UPLOAD_FOLDER)
       --open             Let anyone on the network connect, without the access
                          code in the QR code (or set QRUP_OPEN=1)
+      --any-network      Also accept devices outside the local network, such as
+                         over a VPN like Tailscale (or set QRUP_ANY_NETWORK=1)
   -h, --help             Show this help
   -v, --version          Show the version
 
-Scan the QR code it prints with your phone. Both devices must be on the same network.
+Scan the QR code it prints with your phone. Both devices must be on the same network:
+qrup refuses devices with a public, carrier-grade NAT, or VPN address unless you pass
+--any-network.
 Only devices that open the printed address, which contains a new access code on every
 start, can connect.
 
@@ -31,7 +35,7 @@ asks you in this terminal whether to allow it.`;
 const useColor: boolean = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
 const yellow = (text: string): string => (useColor ? `\x1b[33m${text}\x1b[0m` : text);
 
-function printBanner({ port, uploadDir, token }: Config): void {
+function printBanner({ port, uploadDir, token, anyNetwork }: Config): void {
   const [address, ...otherAddresses] = networkAddresses();
   const query = token === undefined ? '' : `/?t=${token}`;
   console.log('Server running on:');
@@ -46,6 +50,13 @@ function printBanner({ port, uploadDir, token }: Config): void {
   if (token === undefined) {
     console.log(
       yellow('⚠ Open mode: anyone on this network can list, download, and delete these files.\n'),
+    );
+  }
+  if (anyNetwork) {
+    console.log(
+      yellow(
+        '⚠ Any network: devices outside the local network, such as over a VPN, can connect.\n',
+      ),
     );
   }
   if (!address) return;
