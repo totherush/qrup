@@ -26,14 +26,16 @@ export interface Config {
   json: boolean;
   /** `--exit-after-upload`: exit once the first upload is done. */
   exitAfterUpload: boolean;
+  /** `--timeout <min>`: exit with code 2 when no file has arrived after this many minutes. */
+  timeoutMinutes: number | undefined;
 }
 
 const DEFAULT_PORT = 3000;
 const DEFAULT_UPLOAD_FOLDER = 'uploads';
 
 /** Returns the value after `--long` or `-short` in `args`, if any. */
-function readFlag(args: readonly string[], long: string, short: string): string | undefined {
-  for (const flag of [long, short]) {
+function readFlag(args: readonly string[], long: string, short?: string): string | undefined {
+  for (const flag of short === undefined ? [long] : [long, short]) {
     const index = args.indexOf(flag);
     const value = index === -1 ? undefined : args[index + 1];
     if (value !== undefined && !value.startsWith('-')) return value;
@@ -49,6 +51,14 @@ function parsePort(value: string): number {
   return port;
 }
 
+function parseMinutes(value: string): number {
+  const minutes = Number(value);
+  if (!Number.isFinite(minutes) || minutes <= 0) {
+    throw new Error(`Invalid timeout: ${value} (minutes, such as 5 or 0.5)`);
+  }
+  return minutes;
+}
+
 /**
  * Builds the configuration from CLI flags, then environment variables, then defaults.
  * A relative upload folder is resolved against the current working directory.
@@ -58,6 +68,7 @@ export function loadConfig(
   env: NodeJS.ProcessEnv,
   client: ClientFiles,
 ): Config {
+  const timeout = readFlag(args, '--timeout');
   const port = readFlag(args, '--port', '-p') ?? env.PORT ?? String(DEFAULT_PORT);
   const uploadFolder =
     readFlag(args, '--upload', '-u') ?? env.UPLOAD_FOLDER ?? DEFAULT_UPLOAD_FOLDER;
@@ -76,5 +87,6 @@ export function loadConfig(
     anyNetwork,
     json: args.includes('--json'),
     exitAfterUpload: args.includes('--exit-after-upload'),
+    timeoutMinutes: timeout === undefined ? undefined : parseMinutes(timeout),
   };
 }

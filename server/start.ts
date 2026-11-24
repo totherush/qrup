@@ -28,6 +28,8 @@ Options:
       --exit-after-upload
                          Exit once the first upload is done: no upload running
                          and none started for 3 seconds
+      --timeout <min>    Exit with code 2 when no file has arrived after <min>
+                         minutes (a running upload holds it off)
   -h, --help             Show this help
   -v, --version          Show the version
 
@@ -98,16 +100,40 @@ function printBanner({ port, uploadDir, token, anyNetwork }: Config): void {
 /** How long uploads must be quiet before `--exit-after-upload` exits. */
 const UPLOAD_QUIET_MS = 3000;
 
+type ExitReason = 'uploaded' | 'timeout';
+
 /**
- * Calls `exit` with the saved files once the first upload is done: at least one file saved, no
- * upload running, and none started for `UPLOAD_QUIET_MS`. The client sends the files a person
- * picked at once one after another, so the wait keeps them together.
+ * Watches uploads for `--exit-after-upload` and `--timeout`, and calls `exit` once:
+ * - `uploaded` with the saved files when `exitAfterUpload` is set, at least one file is saved, no
+ *   upload is running, and none started for `UPLOAD_QUIET_MS`. The client sends the files a person
+ *   picked at once one after another, so the wait keeps them together.
+ * - `timeout` when `timeoutMs` passes without a saved file. A running upload holds it off, and a
+ *   failed or cancelled one starts the wait again.
  */
-function exitWhenUploadsSettle(exit: (files: string[]) => void): UploadListener {
+function watchUploads(
+  exitAfterUpload: boolean,
+  timeoutMs: number | undefined,
+  exit: (reason: ExitReason, files: string[]) => void,
+): UploadListener {
   const files: string[] = [];
   let running = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let exited = false;
+  const exitAfter = (reason: ExitReason, ms: number): void => {
+    timer = setTimeout((): void => {
+      if (exited) return;
+      exited = true;
+      exit(reason, files);
+    }, ms);
+  };
+  const whenIdle = (): void => {
+    if (files.length > 0) {
+      if (exitAfterUpload) exitAfter('uploaded', UPLOAD_QUIET_MS);
+    } else if (timeoutMs !== undefined) {
+      exitAfter('timeout', timeoutMs);
+    }
+  };
+  whenIdle();
   return {
     started: (): void => {
       running++;
@@ -116,12 +142,7 @@ function exitWhenUploadsSettle(exit: (files: string[]) => void): UploadListener 
     finished: (savedPaths: string[]): void => {
       running--;
       files.push(...savedPaths);
-      if (running === 0 && files.length > 0 && !exited) {
-        timer = setTimeout((): void => {
-          exited = true;
-          exit(files);
-        }, UPLOAD_QUIET_MS);
-      }
+      if (running === 0) whenIdle();
     },
   };
 }
@@ -147,22 +168,32 @@ export function start(client: ClientFiles): void {
 
   let stopAdvertising = (): Promise<void> => Promise.resolve();
   // Withdraw the service so the app stops listing this computer, then exit.
-  const shutdown = (): void => {
-    setTimeout((): never => process.exit(0), 1000).unref();
-    stopAdvertising().finally((): never => process.exit(0));
+  const shutdown = (code: number): void => {
+    setTimeout((): never => process.exit(code), 1000).unref();
+    stopAdvertising().finally((): never => process.exit(code));
   };
-  const onUpload = config.exitAfterUpload
-    ? exitWhenUploadsSettle((files: string[]): void => {
-        if (config.json) printJson({ event: 'exit', reason: 'uploaded', files });
-        else console.log(`\nReceived ${files.length} file(s); exiting.`);
-        shutdown();
-      })
-    : undefined;
+  const { exitAfterUpload, timeoutMinutes } = config;
+  const onUpload =
+    exitAfterUpload || timeoutMinutes !== undefined
+      ? watchUploads(
+          exitAfterUpload,
+          timeoutMinutes === undefined ? undefined : timeoutMinutes * 60_000,
+          (reason: ExitReason, files: string[]): void => {
+            if (config.json) printJson({ event: 'exit', reason, files });
+            else if (reason === 'uploaded') {
+              console.log(`\nReceived ${files.length} file(s); exiting.`);
+            } else console.log(`\nNo file arrived within ${timeoutMinutes} minute(s); exiting.`);
+            // Code 2 tells a script that nothing arrived.
+            shutdown(reason === 'uploaded' ? 0 : 2);
+          },
+        )
+      : undefined;
 
   createApp(config, approveInTerminal, onUpload).listen(config.port, '0.0.0.0', (): void => {
     if (config.json) printListening(config);
     else printBanner(config);
     stopAdvertising = advertise(config.port, config.token === undefined);
-    for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, shutdown);
+    for (const signal of ['SIGINT', 'SIGTERM'] as const)
+      process.once(signal, (): void => shutdown(0));
   });
 }

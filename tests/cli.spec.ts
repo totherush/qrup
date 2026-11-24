@@ -36,7 +36,11 @@ test('--json --exit-after-upload prints JSON lines and exits with the files of o
   const port = 3102;
   const uploadDir = path.resolve('tmp/e2e-agent-uploads');
   fs.rmSync(uploadDir, { recursive: true, force: true });
-  qrup = startQrup(['--json', '--exit-after-upload', '-p', String(port)], uploadDir);
+  // The 3-second timeout passes before the upload batch settles; the upload must hold it off.
+  qrup = startQrup(
+    ['--json', '--exit-after-upload', '--timeout', '0.05', '-p', String(port)],
+    uploadDir,
+  );
   const current = qrup;
 
   // Every stdout line is JSON; the first one says where qrup listens.
@@ -73,4 +77,14 @@ test('--json --exit-after-upload prints JSON lines and exits with the files of o
     files: [path.join(uploadDir, 'a.txt'), path.join(uploadDir, 'b.txt')],
   });
   expect(fs.readFileSync(path.join(uploadDir, 'b.txt'), 'utf8')).toBe('b.txt');
+});
+
+test('--timeout exits with code 2 when no file arrives', async () => {
+  qrup = startQrup(
+    ['--json', '--exit-after-upload', '--timeout', '0.02', '-p', '3103'],
+    'tmp/e2e-agent-uploads',
+  );
+  const current = qrup;
+  expect(await current.exited).toBe(2);
+  expect(jsonLines(current).at(-1)).toEqual({ event: 'exit', reason: 'timeout', files: [] });
 });
