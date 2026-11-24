@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Prepares a fresh Amp orb: dependencies and the Playwright browser for the E2E tests.
+# Bun and Node come with the orb image. Safe to run again on a warm orb.
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+step() {
+  local name=$1
+  shift
+  echo "==> $name"
+  local start=$SECONDS
+  "$@"
+  echo "    $name took $((SECONDS - start))s"
+}
+
+step "bun $(bun --version), node $(node --version)" true
+step "bun install" bun install --frozen-lockfile
+# Downloads only when the pinned @playwright/test version's browser is missing.
+step "playwright chromium" bunx playwright install --only-shell chromium
