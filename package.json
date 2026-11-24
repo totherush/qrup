@@ -34,6 +34,7 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@homebridge/ciao": "^1.4.0",
     "archiver": "^8.0.0",
     "express": "^5.3.0",
     "multer": "^2.5.0",

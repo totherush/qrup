@@ -1,6 +1,6 @@
 import type { Request } from 'express';
 
-export type Action = 'UPLOAD' | 'DOWNLOAD' | 'DELETE';
+export type Action = 'UPLOAD' | 'DOWNLOAD' | 'DELETE' | 'ALLOWED' | 'DENIED' | 'EXPIRED';
 
 const useColor: boolean = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
 
@@ -12,6 +12,9 @@ const ACTION_COLOR: Record<Action, string> = {
   UPLOAD: '32', // green
   DOWNLOAD: '36', // cyan
   DELETE: '31', // red
+  ALLOWED: '32', // green
+  DENIED: '31', // red
+  EXPIRED: '33', // yellow
 };
 
 function timestamp(date: Date): string {
@@ -20,19 +23,25 @@ function timestamp(date: Date): string {
   return `${day} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
-function clientAddress(req: Request): string {
+/** The IP address a request comes from, such as `192.168.1.5`. */
+export function clientAddress(req: Request): string {
   const address = req.ip ?? req.socket.remoteAddress ?? 'unknown';
   return address.replace('::ffff:', '');
 }
 
-/** Prints one line of the activity log, such as `2026-11-17 11:35:00 INFO 192.168.1.5 UPLOAD "a.jpg"`. */
-export function logAction(req: Request, action: Action, subject: string): void {
+/** Prints one line of the activity log, such as `2026-11-17 11:35:00 INFO 192.168.1.5 DENIED "Pixel 9"`. */
+export function logEvent(address: string, action: Action, subject: string): void {
   const columns = [
     paint('2', timestamp(new Date())),
     'INFO ',
-    clientAddress(req).padEnd(21),
+    address.padEnd(21),
     paint(ACTION_COLOR[action], action.padEnd(9)),
     `"${subject}"`,
   ];
   console.info(columns.join(' '));
+}
+
+/** Logs what a request did, such as `2026-11-17 11:35:00 INFO 192.168.1.5 UPLOAD "a.jpg"`. */
+export function logAction(req: Request, action: Action, subject: string): void {
+  logEvent(clientAddress(req), action, subject);
 }

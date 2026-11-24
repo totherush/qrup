@@ -3,7 +3,9 @@ import qrcode from 'qrcode-terminal';
 import pkg from '../package.json' with { type: 'json' };
 import { createApp } from './app';
 import { type ClientFiles, type Config, loadConfig } from './config';
+import { advertise } from './lib/discovery';
 import { networkAddresses } from './lib/network';
+import { approveInTerminal } from './lib/terminal-approval';
 
 const HELP = `qrup ${pkg.version}
 Move files between your phone and this computer over the local network.
@@ -21,7 +23,10 @@ Options:
 
 Scan the QR code it prints with your phone. Both devices must be on the same network.
 Only devices that open the printed address, which contains a new access code on every
-start, can connect.`;
+start, can connect.
+
+The qrup app also finds qrup on the network by itself. When it asks to connect, qrup
+asks you in this terminal whether to allow it.`;
 
 const useColor: boolean = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
 const yellow = (text: string): string => (useColor ? `\x1b[33m${text}\x1b[0m` : text);
@@ -68,5 +73,15 @@ export function start(client: ClientFiles): void {
 
   const config = loadConfig(args, process.env, client);
   fs.mkdirSync(config.uploadDir, { recursive: true });
-  createApp(config).listen(config.port, '0.0.0.0', (): void => printBanner(config));
+  createApp(config, approveInTerminal).listen(config.port, '0.0.0.0', (): void => {
+    printBanner(config);
+    const stopAdvertising = advertise(config.port, config.token === undefined);
+    // Withdraw the service so the app stops listing this computer, then exit.
+    for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+      process.once(signal, (): void => {
+        setTimeout((): never => process.exit(0), 1000).unref();
+        stopAdvertising().finally((): never => process.exit(0));
+      });
+    }
+  });
 }

@@ -10,6 +10,7 @@ import express, {
 } from 'express';
 import type { ClientFiles, Config } from './config';
 import { filesRouter } from './routes/files';
+import { type ApproveJoin, joinRouter } from './routes/join';
 import { uploadRouter } from './routes/upload';
 
 /** Serves the client from a folder, falling back to `index.html` for every unknown path. */
@@ -53,10 +54,14 @@ function requireToken(token: string): RequestHandler {
   };
 }
 
-/** Builds the Express app: the JSON API under `/api` and the built client for every other path. */
-export function createApp({ uploadDir, client, token }: Config): Express {
+/**
+ * Builds the Express app: the JSON API under `/api` and the built client for every other path.
+ * `approveJoin` decides join requests from devices that connect without the QR code.
+ */
+export function createApp({ uploadDir, client, token }: Config, approveJoin: ApproveJoin): Express {
   const app = express();
 
+  app.use('/api', joinRouter(token, approveJoin));
   const guard = token === undefined ? [] : [requireToken(token)];
   app.use('/api', ...guard, uploadRouter(uploadDir), filesRouter(uploadDir));
   app.use(serveClient(client));

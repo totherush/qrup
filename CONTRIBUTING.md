@@ -30,11 +30,12 @@ bun run test:e2e   # Playwright end-to-end tests; must pass
 ```
 server/                Express server, run by Bun
   index.ts             entry when run from source or dist/server.js
-  start.ts             CLI flags, startup, QR code banner
+  start.ts             CLI flags, startup, QR code banner, network announcement
   config.ts            flags, then environment variables, then defaults
   app.ts               mounts the API and serves the client
-  routes/              upload and delete; file list and download
-  lib/                 path safety, file tree, logging, network addresses
+  routes/              upload and delete; file list and download; join requests
+  lib/                 path safety, file tree, logging, network addresses,
+                       mDNS announcement, join prompt in the terminal
 client/src/            React app
   api.ts               typed calls to the server API
   hooks/               upload queue: parallel uploads, progress, cancel

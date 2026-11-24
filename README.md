@@ -11,7 +11,7 @@ brew install totherush/tap/qrup
 qrup
 ```
 
-> 🔒 **Only devices that scan the QR code can connect.** The code contains a new access token every time qrup starts. Traffic is plain HTTP, so use qrup on networks you trust, and never expose it to the internet. See [SECURITY.md](SECURITY.md).
+> 🔒 **Only devices that scan the QR code, or that you allow in the terminal, can connect.** The code contains a new access token every time qrup starts. Traffic is plain HTTP, so use qrup on networks you trust, and never expose it to the internet. See [SECURITY.md](SECURITY.md).
 
 ## How it works
 
@@ -32,6 +32,18 @@ qrup
    <img src=".github/screenshots/desktop-browser.png" alt="qrup in a desktop browser" width="600">
 
 Uploads are saved to `./uploads` in the folder you start qrup from. A file whose name already exists is saved as `name (1).ext`, and a cancelled upload leaves nothing behind.
+
+## Connect from the qrup app without the QR code
+
+While it runs, qrup announces itself on the local network (mDNS/DNS-SD, service type `_qrup._tcp`) under the computer's name, so the qrup app lists it without scanning anything. When you pick it in the app, qrup asks in its terminal:
+
+```text
+"Pixel 9" (192.168.1.23) wants to connect. Allow? [y/N]
+```
+
+Type `y` and Enter to let the phone in; anything else denies it. The activity log records each decision as `ALLOWED`, `DENIED`, or `EXPIRED`. A request you do not answer expires after 2 minutes, and several requests are asked one after another. qrup can only ask when it runs in an interactive terminal; otherwise it denies every request. With `--open`, every request is allowed without asking.
+
+For apps that implement the protocol: `POST /api/join` with `{ "deviceName": "…" }` answers `202 { "requestId": "…" }`. Poll `GET /api/join/<requestId>` about once a second until `status` is `approved`, `denied`, or `expired`; an approved response also contains the `token` to send as the `x-qrup-token` header. Neither endpoint needs the token. Each address has one pending request at a time, a new one replaces it, and more than 5 requests a minute are refused with 429. The service's TXT record contains `v=1`, `name=<computer name>`, and `open=1` when qrup runs with `--open`, else `open=0`. The types are in [shared/api.ts](shared/api.ts).
 
 ## Install
 
