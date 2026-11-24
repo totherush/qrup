@@ -1,6 +1,6 @@
 {
   "name": "qrup",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "module",
   "description": "QRUp - Simple file upload page for local network",
   "main": "dist/server.js",

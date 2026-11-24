@@ -1,6 +1,35 @@
 # Changelog
 
 
+## v0.2.3
+
+[compare changes](https://github.com/totherush/qrup/compare/v0.2.2...v0.2.3)
+
+### 🚀 Enhancements
+
+- **server:** Discover qrup on the network and approve phones that join ([e6a9934](https://github.com/totherush/qrup/commit/e6a9934))
+- **server:** Only serve devices on the local network ([9a63af3](https://github.com/totherush/qrup/commit/9a63af3))
+- **cli:** Add --json and --exit-after-upload for scripts and agents ([7600e76](https://github.com/totherush/qrup/commit/7600e76))
+- **cli:** Add --timeout to give up when no file arrives ([454c7a1](https://github.com/totherush/qrup/commit/454c7a1))
+
+### 📖 Documentation
+
+- **changelog:** Point commit links to rewritten history ([b730e3f](https://github.com/totherush/qrup/commit/b730e3f))
+- **readme:** Describe sharing with any device on the network ([37a38f8](https://github.com/totherush/qrup/commit/37a38f8))
+
+### 🏡 Chore
+
+- Prepare the repository for Amp orbs ([0506b01](https://github.com/totherush/qrup/commit/0506b01))
+
+### 🤖 CI
+
+- **release:** Update the Homebrew formula automatically ([9283970](https://github.com/totherush/qrup/commit/9283970))
+
+### ❤️ Contributors
+
+- Amp <amp@ampcode.com>
+- Tobias Trusch <tobiastrusch@gmail.com>
+
 ## v0.2.2
 
 [compare changes](https://github.com/totherush/qrup/compare/v0.2.1...v0.2.2)
