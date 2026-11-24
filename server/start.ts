@@ -4,8 +4,10 @@ import pkg from '../package.json' with { type: 'json' };
 import { createApp } from './app';
 import { type ClientFiles, type Config, loadConfig } from './config';
 import { advertise } from './lib/discovery';
+import { printJson, setJsonOutput } from './lib/logger';
 import { networkAddresses } from './lib/network';
 import { approveInTerminal } from './lib/terminal-approval';
+import type { UploadListener } from './routes/upload';
 
 const HELP = `qrup ${pkg.version}
 Move files between your phone and this computer over the local network.
@@ -20,6 +22,12 @@ Options:
                          code in the QR code (or set QRUP_OPEN=1)
       --any-network      Also accept devices outside the local network, such as
                          over a VPN like Tailscale (or set QRUP_ANY_NETWORK=1)
+      --json             Print JSON lines instead of the banner and QR code: the
+                         addresses on start, then every activity (for scripts
+                         and agents)
+      --exit-after-upload
+                         Exit once the first upload is done: no upload running
+                         and none started for 3 seconds
   -h, --help             Show this help
   -v, --version          Show the version
 
@@ -34,6 +42,26 @@ asks you in this terminal whether to allow it.`;
 
 const useColor: boolean = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
 const yellow = (text: string): string => (useColor ? `\x1b[33m${text}\x1b[0m` : text);
+
+/** Prints the addresses as one JSON line for `--json`, in place of the banner. */
+function printListening({ port, uploadDir, token, anyNetwork }: Config): void {
+  const query = token === undefined ? '' : `/?t=${token}`;
+  const networkUrls = networkAddresses().map(
+    (address: string): string => `http://${address}:${port}${query}`,
+  );
+  printJson({
+    event: 'listening',
+    version: pkg.version,
+    port,
+    url: networkUrls[0] ?? null,
+    localUrl: `http://localhost:${port}${query}`,
+    networkUrls,
+    token: token ?? null,
+    uploadDir,
+    open: token === undefined,
+    anyNetwork,
+  });
+}
 
 function printBanner({ port, uploadDir, token, anyNetwork }: Config): void {
   const [address, ...otherAddresses] = networkAddresses();
@@ -67,6 +95,37 @@ function printBanner({ port, uploadDir, token, anyNetwork }: Config): void {
   console.log('\nActivity log:');
 }
 
+/** How long uploads must be quiet before `--exit-after-upload` exits. */
+const UPLOAD_QUIET_MS = 3000;
+
+/**
+ * Calls `exit` with the saved files once the first upload is done: at least one file saved, no
+ * upload running, and none started for `UPLOAD_QUIET_MS`. The client sends the files a person
+ * picked at once one after another, so the wait keeps them together.
+ */
+function exitWhenUploadsSettle(exit: (files: string[]) => void): UploadListener {
+  const files: string[] = [];
+  let running = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let exited = false;
+  return {
+    started: (): void => {
+      running++;
+      clearTimeout(timer);
+    },
+    finished: (savedPaths: string[]): void => {
+      running--;
+      files.push(...savedPaths);
+      if (running === 0 && files.length > 0 && !exited) {
+        timer = setTimeout((): void => {
+          exited = true;
+          exit(files);
+        }, UPLOAD_QUIET_MS);
+      }
+    },
+  };
+}
+
 /**
  * Reads the CLI flags and environment, then starts the server and prints its URLs and QR code.
  * Called by `index.ts` (client from `dist/client`) and by the compiled binary (embedded client).
@@ -83,16 +142,27 @@ export function start(client: ClientFiles): void {
   }
 
   const config = loadConfig(args, process.env, client);
+  if (config.json) setJsonOutput();
   fs.mkdirSync(config.uploadDir, { recursive: true });
-  createApp(config, approveInTerminal).listen(config.port, '0.0.0.0', (): void => {
-    printBanner(config);
-    const stopAdvertising = advertise(config.port, config.token === undefined);
-    // Withdraw the service so the app stops listing this computer, then exit.
-    for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-      process.once(signal, (): void => {
-        setTimeout((): never => process.exit(0), 1000).unref();
-        stopAdvertising().finally((): never => process.exit(0));
-      });
-    }
+
+  let stopAdvertising = (): Promise<void> => Promise.resolve();
+  // Withdraw the service so the app stops listing this computer, then exit.
+  const shutdown = (): void => {
+    setTimeout((): never => process.exit(0), 1000).unref();
+    stopAdvertising().finally((): never => process.exit(0));
+  };
+  const onUpload = config.exitAfterUpload
+    ? exitWhenUploadsSettle((files: string[]): void => {
+        if (config.json) printJson({ event: 'exit', reason: 'uploaded', files });
+        else console.log(`\nReceived ${files.length} file(s); exiting.`);
+        shutdown();
+      })
+    : undefined;
+
+  createApp(config, approveInTerminal, onUpload).listen(config.port, '0.0.0.0', (): void => {
+    if (config.json) printListening(config);
+    else printBanner(config);
+    stopAdvertising = advertise(config.port, config.token === undefined);
+    for (const signal of ['SIGINT', 'SIGTERM'] as const) process.once(signal, shutdown);
   });
 }

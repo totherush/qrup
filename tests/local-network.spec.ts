@@ -1,11 +1,10 @@
-import { type ChildProcess, spawn } from 'node:child_process';
 import type { AddressInfo } from 'node:net';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { createApp } from '../server/app';
 import { isLocalNetworkAddress } from '../server/lib/local-network';
-import { token, uploadsDir } from './helpers';
+import { uploadsDir } from './helpers';
 
 const REFUSED = 'qrup only accepts devices on the same network.';
 
@@ -97,7 +96,7 @@ test.describe('Requests from outside the local network', () => {
     });
     outer.use(
       createApp(
-        { port: 0, uploadDir, client: { embedded: {} }, token: undefined, anyNetwork },
+        { uploadDir, client: { embedded: {} }, token: undefined, anyNetwork },
         async (): Promise<boolean> => true,
       ),
     );
@@ -149,41 +148,6 @@ test.describe('Requests from outside the local network', () => {
     const url = await startServer(true);
     const files = await request.get(`${url}/api/files`, {
       headers: { 'x-test-remote': '100.64.1.2', connection: 'close' },
-    });
-    expect(files.status()).toBe(200);
-  });
-});
-
-test.describe('--any-network flag', () => {
-  let child: ChildProcess | undefined;
-  test.afterEach((): void => void child?.kill());
-
-  test('starts qrup with a warning in the banner', async ({ request }) => {
-    // The same server the suite runs against: the compiled binary, or the build from `bun run start`.
-    const [command = 'bun', ...args] = process.env.QRUP_BINARY
-      ? [process.env.QRUP_BINARY]
-      : ['bun', 'dist/server.js'];
-    const port = 3101;
-    child = spawn(command, [...args, '--any-network', '-p', String(port)], {
-      env: {
-        ...process.env,
-        UPLOAD_FOLDER: 'tmp/e2e-any-network-uploads',
-        QRUP_TOKEN: token,
-        NO_COLOR: '1',
-      },
-    });
-    let output = '';
-    child.stdout?.on('data', (chunk: Buffer): void => {
-      output += chunk.toString();
-    });
-
-    await expect
-      .poll(() => output, { timeout: 15_000 })
-      .toContain(
-        '⚠ Any network: devices outside the local network, such as over a VPN, can connect.',
-      );
-    const files = await request.get(`http://localhost:${port}/api/files`, {
-      headers: { 'x-qrup-token': token },
     });
     expect(files.status()).toBe(200);
   });

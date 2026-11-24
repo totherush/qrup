@@ -11,6 +11,19 @@ export type Action =
 
 const useColor: boolean = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
 
+/** With `--json`, stdout carries only JSON lines, one per event. */
+let jsonOutput = false;
+
+/** Switches the activity log to JSON lines, for `--json`. */
+export function setJsonOutput(): void {
+  jsonOutput = true;
+}
+
+/** Prints `event` as one JSON line on stdout. */
+export function printJson(event: object): void {
+  console.log(JSON.stringify(event));
+}
+
 function paint(code: string, text: string): string {
   return useColor ? `\x1b[${code}m${text}\x1b[0m` : text;
 }
@@ -37,8 +50,15 @@ export function clientAddress(req: Request): string {
   return address.replace('::ffff:', '');
 }
 
-/** Prints one line of the activity log, such as `2026-11-17 11:35:00 INFO 192.168.1.5 DENIED "Pixel 9"`. */
+/**
+ * Prints one line of the activity log, such as `2026-11-17 11:35:00 INFO 192.168.1.5 DENIED "Pixel 9"`,
+ * or with `--json` `{"event":"activity","time":"…","address":"192.168.1.5","action":"DENIED","subject":"Pixel 9"}`.
+ */
 export function logEvent(address: string, action: Action, subject: string): void {
+  if (jsonOutput) {
+    printJson({ event: 'activity', time: new Date().toISOString(), address, action, subject });
+    return;
+  }
   const columns = [
     paint('2', timestamp(new Date())),
     'INFO ',

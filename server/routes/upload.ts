@@ -6,6 +6,13 @@ import type { ErrorResponse, UploadResponse } from '../../shared/api';
 import { logAction } from '../lib/logger';
 import { moveToFreeName, resolveInside, sanitizeFileName, TEMP_DIR_NAME } from '../lib/paths';
 
+/** Hears about uploads: `started` when an upload request arrives, `finished` when it ends. */
+export interface UploadListener {
+  started: () => void;
+  /** Absolute paths of the files the request saved; empty when it failed or was aborted. */
+  finished: (savedPaths: string[]) => void;
+}
+
 /**
  * `POST /api/upload` saves the `files` fields of a multipart body.
  * Each file is streamed into the temp folder and only moved into the upload folder once
@@ -14,7 +21,7 @@ import { moveToFreeName, resolveInside, sanitizeFileName, TEMP_DIR_NAME } from '
  *
  * `DELETE /api/upload/:filename` deletes one file from the upload folder.
  */
-export function uploadRouter(uploadDir: string): Router {
+export function uploadRouter(uploadDir: string, listener?: UploadListener): Router {
   const tempDir = path.join(uploadDir, TEMP_DIR_NAME);
   // Leftovers from a crash are never completed, so start clean.
   fs.rmSync(tempDir, { recursive: true, force: true });
@@ -29,6 +36,9 @@ export function uploadRouter(uploadDir: string): Router {
   const router = Router();
 
   router.post('/upload', (req: Request, res: Response<UploadResponse | ErrorResponse>): void => {
+    let savedPaths: string[] = [];
+    listener?.started();
+    res.on('close', (): void => listener?.finished(savedPaths));
     receiveFiles(req, res, (error: unknown): void => {
       if (error) {
         res.status(400).json({ error: error instanceof Error ? error.message : 'Upload failed' });
@@ -45,6 +55,7 @@ export function uploadRouter(uploadDir: string): Router {
         logAction(req, 'UPLOAD', savedName);
         return savedName;
       });
+      savedPaths = savedNames.map((name: string): string => path.join(uploadDir, name));
       res.json({ success: true, files: savedNames });
     });
   });

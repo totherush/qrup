@@ -12,7 +12,7 @@ import type { ClientFiles, Config } from './config';
 import { localNetworkOnly } from './lib/local-network';
 import { filesRouter } from './routes/files';
 import { type ApproveJoin, joinRouter } from './routes/join';
-import { uploadRouter } from './routes/upload';
+import { type UploadListener, uploadRouter } from './routes/upload';
 
 /** Serves the client from a folder, falling back to `index.html` for every unknown path. */
 function serveFolder(dir: string): RequestHandler[] {
@@ -58,18 +58,25 @@ function requireToken(token: string): RequestHandler {
 /**
  * Builds the Express app: the JSON API under `/api` and the built client for every other path.
  * Devices outside the local network are refused unless `anyNetwork` is set.
- * `approveJoin` decides join requests from devices that connect without the QR code.
+ * `approveJoin` decides join requests from devices that connect without the QR code;
+ * `onUpload` hears when uploads start and finish.
  */
 export function createApp(
-  { uploadDir, client, token, anyNetwork }: Config,
+  {
+    uploadDir,
+    client,
+    token,
+    anyNetwork,
+  }: Pick<Config, 'uploadDir' | 'client' | 'token' | 'anyNetwork'>,
   approveJoin: ApproveJoin,
+  onUpload?: UploadListener,
 ): Express {
   const app = express();
 
   if (!anyNetwork) app.use(localNetworkOnly());
   app.use('/api', joinRouter(token, approveJoin));
   const guard = token === undefined ? [] : [requireToken(token)];
-  app.use('/api', ...guard, uploadRouter(uploadDir), filesRouter(uploadDir));
+  app.use('/api', ...guard, uploadRouter(uploadDir, onUpload), filesRouter(uploadDir));
   app.use(serveClient(client));
 
   return app;

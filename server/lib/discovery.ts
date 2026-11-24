@@ -25,7 +25,7 @@ export function advertise(port: number, open: boolean): () => Promise<void> {
       hostname: `qrup-${name.replaceAll('.', '-')}`,
     });
     service.on('name-change', (newName: string): void => {
-      console.info(`Another device on the network uses this name; announced as "${newName}".`);
+      console.warn(`Another device on the network uses this name; announced as "${newName}".`);
     });
     service.advertise().catch(warn);
   } catch (error: unknown) {

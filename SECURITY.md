@@ -10,6 +10,8 @@ The qrup app can also ask to connect without the QR code (a join request). qrup 
 
 qrup only serves devices with a local network address: loopback, private IPv4 (10/8, 172.16/12, 192.168/16), link-local (169.254/16, fe80::/10), and IPv6 unique local addresses (fc00::/7); an IPv4-mapped IPv6 address counts as its IPv4 address. Requests from any other address, such as a public IPv4 or IPv6 address, carrier-grade NAT or VPN ranges (100.64/10, which Tailscale uses), or through port forwarding from the internet, are refused with 403 before the token is checked, and the activity log shows `REFUSED` once per address. qrup uses the address of the connection itself and ignores `X-Forwarded-For`, so a reverse proxy on the same computer makes every request look local. `--any-network` (or `QRUP_ANY_NETWORK=1`) turns this check off for deliberate VPN use, and qrup prints a warning; the token still applies.
 
+`--json` prints the token on stdout. Treat that output like the QR code: anyone who reads it can access the files.
+
 Traffic is plain HTTP. Someone who can read traffic on your network can see the token and the files. Use qrup on networks you trust, do not expose it to the internet, and stop it (Ctrl+C) when you are done.
 
 qrup also protects the rest of your computer: requests cannot read or delete files outside the upload folder.

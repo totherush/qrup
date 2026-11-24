@@ -5,9 +5,10 @@ import type { JoinRequest } from '../routes/join';
 let queue: Promise<unknown> = Promise.resolve();
 let warnedNoTerminal = false;
 
+/** Prompts on stderr, so stdout stays a clean activity log (JSON lines with `--json`). */
 function ask({ deviceName, ip }: JoinRequest, signal: AbortSignal): Promise<boolean> {
   return new Promise((resolve: (allowed: boolean) => void): void => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const rl = readline.createInterface({ input: process.stdin, output: process.stderr });
     const finish = (allowed: boolean): void => {
       signal.removeEventListener('abort', onAbort);
       rl.close();
@@ -15,13 +16,13 @@ function ask({ deviceName, ip }: JoinRequest, signal: AbortSignal): Promise<bool
     };
     // The request expired or was replaced; end the prompt line so the log continues below it.
     const onAbort = (): void => {
-      process.stdout.write('\n');
+      process.stderr.write('\n');
       finish(false);
     };
     signal.addEventListener('abort', onAbort, { once: true });
     // In a prompt, Ctrl+C reaches readline instead of the process; stop qrup as usual.
     rl.on('SIGINT', (): void => {
-      process.stdout.write('\n');
+      process.stderr.write('\n');
       rl.close();
       process.kill(process.pid, 'SIGINT');
     });

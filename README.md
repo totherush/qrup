@@ -67,16 +67,30 @@ qrup -p 8080 -u ~/Downloads   # custom port and upload folder
 qrup --help                   # all options
 ```
 
-| Option            | Environment variable | Default     |                                                              |
-| ----------------- | -------------------- | ----------- | ------------------------------------------------------------ |
-| `-p`, `--port`    | `PORT`               | `3000`      | Port to listen on                                            |
-| `-u`, `--upload`  | `UPLOAD_FOLDER`      | `./uploads` | Upload folder, absolute or relative to the current directory |
-| `--open`          | `QRUP_OPEN=1`        | off         | Let anyone on the network connect, without the access token  |
-| `--any-network`   | `QRUP_ANY_NETWORK=1` | off         | Also accept devices outside the local network, such as a VPN |
-| `-v`, `--version` |                      |             | Print the version                                            |
-| `-h`, `--help`    |                      |             | Print the help                                               |
+| Option                | Environment variable | Default     |                                                              |
+| --------------------- | -------------------- | ----------- | ------------------------------------------------------------ |
+| `-p`, `--port`        | `PORT`               | `3000`      | Port to listen on                                            |
+| `-u`, `--upload`      | `UPLOAD_FOLDER`      | `./uploads` | Upload folder, absolute or relative to the current directory |
+| `--open`              | `QRUP_OPEN=1`        | off         | Let anyone on the network connect, without the access token  |
+| `--any-network`       | `QRUP_ANY_NETWORK=1` | off         | Also accept devices outside the local network, such as a VPN |
+| `--json`              |                      | off         | Print JSON lines instead of the banner (for scripts, agents) |
+| `--exit-after-upload` |                      | off         | Exit once the first batch of uploads is done                 |
+| `-v`, `--version`     |                      |             | Print the version                                            |
+| `-h`, `--help`        |                      |             | Print the help                                               |
 
 qrup only serves devices on the local network: loopback, private IPv4 (`10/8`, `172.16/12`, `192.168/16`), link-local (`169.254/16`, `fe80::/10`), and IPv6 unique local addresses (`fc00::/7`). Every other address, such as a public IPv4 or IPv6 address or carrier-grade NAT (`100.64/10`, which Tailscale also uses), gets `403` and one `REFUSED` line per address in the activity log, even when your router forwards the port. To reach qrup over a VPN such as Tailscale on purpose, start it with `--any-network`; the banner then shows a warning.
+
+### From scripts and agents
+
+`--json` replaces the banner and QR code with one JSON object per line on stdout; prompts and warnings go to stderr. The first line says where qrup listens, then every activity log entry follows, and with `--exit-after-upload` a last line lists the saved files:
+
+```jsonl
+{"event":"listening","version":"0.2.2","port":3000,"url":"http://192.168.1.20:3000/?t=…","localUrl":"http://localhost:3000/?t=…","networkUrls":["http://192.168.1.20:3000/?t=…"],"token":"…","uploadDir":"/Users/me/uploads","open":false,"anyNetwork":false}
+{"event":"activity","time":"2026-11-24T12:00:00.000Z","address":"192.168.1.5","action":"UPLOAD","subject":"IMG_0042.jpg"}
+{"event":"exit","reason":"uploaded","files":["/Users/me/uploads/IMG_0042.jpg"]}
+```
+
+`url` is the first network address (`null` without one), and `token` is `null` with `--open`. `--exit-after-upload` exits with code 0 once at least one file is saved, no upload is running, and none started for 3 seconds, so all files picked at once arrive before it exits. An agent can run `qrup --json --exit-after-upload`, show the `url` to you as a link or QR code, and read the `files` of the last line after you send a photo from your phone.
 
 The first time it runs, macOS may ask whether qrup may accept incoming network connections. Allow it, or other devices cannot reach the page.
 

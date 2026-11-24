@@ -1,3 +1,4 @@
+import { type ChildProcess, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,4 +26,33 @@ export function emptyUploads(): void {
     if (entry === '.qrup-tmp') continue;
     fs.rmSync(path.join(uploadsDir, entry), { recursive: true, force: true });
   }
+}
+
+export interface QrupProcess {
+  child: ChildProcess;
+  /** Everything the process printed on stdout so far. */
+  stdout: () => string;
+  /** Resolves with the exit code once the process exits. */
+  exited: Promise<number | null>;
+}
+
+/**
+ * Starts qrup as its own process with `args`, the same way the suite's server runs: the
+ * compiled binary from `QRUP_BINARY`, or the build that `bun run start` made.
+ */
+export function startQrup(args: readonly string[], uploadFolder: string): QrupProcess {
+  const [command = 'bun', ...base] = process.env.QRUP_BINARY
+    ? [process.env.QRUP_BINARY]
+    : ['bun', 'dist/server.js'];
+  const child = spawn(command, [...base, ...args], {
+    env: { ...process.env, UPLOAD_FOLDER: uploadFolder, QRUP_TOKEN: token, NO_COLOR: '1' },
+  });
+  let stdout = '';
+  child.stdout?.on('data', (chunk: Buffer): void => {
+    stdout += chunk.toString();
+  });
+  const exited = new Promise<number | null>((resolve): void => {
+    child.once('exit', (code: number | null): void => resolve(code));
+  });
+  return { child, stdout: (): string => stdout, exited };
 }

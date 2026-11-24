@@ -22,6 +22,10 @@ export interface Config {
    * Otherwise only devices on the local network are served.
    */
   anyNetwork: boolean;
+  /** `--json`: print JSON lines (the address on start, then each event) instead of the banner. */
+  json: boolean;
+  /** `--exit-after-upload`: exit once the first upload is done. */
+  exitAfterUpload: boolean;
 }
 
 const DEFAULT_PORT = 3000;
@@ -70,5 +74,7 @@ export function loadConfig(
     client,
     token,
     anyNetwork,
+    json: args.includes('--json'),
+    exitAfterUpload: args.includes('--exit-after-upload'),
   };
 }
